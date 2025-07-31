@@ -1,0 +1,131 @@
+/* Light mode styles */
+[data-color-mode='light'] .w-md-editor {
+  background-color: white !important;
+}
+
+[data-color-mode='light'] .w-md-editor-toolbar {
+  background-color: #f9fafb !important;
+}
+
+[data-color-mode='light'] .w-md-editor-preview {
+  background-color: white !important;
+}
+
+[data-color-mode='light'] .w-md-editor-text-pre,
+[data-color-mode='light'] .w-md-editor-text-input,
+[data-color-mode='light'] .w-md-editor-text-textarea {
+  color: #111827 !important;
+}
+
+[data-color-mode='light'] .w-md-editor.w-md-editor-focus {
+  border-color: #3b82f6 !important;
+}
+
+[data-color-mode='light'] .w-md-editor-toolbar button {
+  color: #374151 !important;
+}
+
+[data-color-mode='light'] .w-md-editor-toolbar button:hover {
+  background-color: #e5e7eb !important;
+}
+
+[data-color-mode='light'] .w-md-editor-toolbar li.active button {
+  background-color: #dbeafe !important;
+}
+
+[data-color-mode='light'] .wmde-markdown {
+  background-color: white !important;
+  color: #111827 !important;
+}
+
+[data-color-mode='light'] .wmde-markdown h1,
+[data-color-mode='light'] .wmde-markdown h2,
+[data-color-mode='light'] .wmde-markdown h3,
+[data-color-mode='light'] .wmde-markdown h4,
+[data-color-mode='light'] .wmde-markdown h5,
+[data-color-mode='light'] .wmde-markdown h6 {
+  color: #111827 !important;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Dark mode styles */
+[data-color-mode='dark'] .w-md-editor {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+[data-color-mode='dark'] .w-md-editor-toolbar {
+  background-color: #111827 !important;
+}
+
+[data-color-mode='dark'] .w-md-editor-preview {
+  background-color: #1f2937 !important;
+}
+
+[data-color-mode='dark'] .w-md-editor-text-pre,
+[data-color-mode='dark'] .w-md-editor-text-input,
+[data-color-mode='dark'] .w-md-editor-text-textarea {
+  color: #f3f4f6 !important;
+}
+
+[data-color-mode='dark'] .w-md-editor.w-md-editor-focus {
+  border-color: #3b82f6 !important;
+}
+
+[data-color-mode='dark'] .w-md-editor-toolbar button {
+  color: #d1d5db !important;
+}
+
+[data-color-mode='dark'] .w-md-editor-toolbar button:hover {
+  background-color: #374151 !important;
+}
+
+[data-color-mode='dark'] .w-md-editor-toolbar li.active button {
+  background-color: #1e3a8a !important;
+}
+
+[data-color-mode='dark'] .wmde-markdown {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+}
+
+[data-color-mode='dark'] .wmde-markdown h1,
+[data-color-mode='dark'] .wmde-markdown h2,
+[data-color-mode='dark'] .wmde-markdown h3,
+[data-color-mode='dark'] .wmde-markdown h4,
+[data-color-mode='dark'] .wmde-markdown h5,
+[data-color-mode='dark'] .wmde-markdown h6 {
+  color: #f3f4f6 !important;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 1rem !important;
+}
+
+[data-color-mode='dark'] .wmde-markdown code {
+  background-color: #374151 !important;
+  color: #d1d5db !important;
+}
+
+[data-color-mode='dark'] .wmde-markdown pre {
+  background-color: #111827 !important;
+}
+
+[data-color-mode='dark'] .wmde-markdown blockquote {
+  border-left-color: #4b5563 !important;
+  color: #9ca3af !important;
+}
+
+[data-color-mode='dark'] .wmde-markdown table {
+  border-color: #374151 !important;
+}
+
+[data-color-mode='dark'] .wmde-markdown th,
+[data-color-mode='dark'] .wmde-markdown td {
+  border-color: #374151 !important;
+}
+
+[data-color-mode='dark'] .wmde-markdown th {
+  background-color: #111827 !important;
+}

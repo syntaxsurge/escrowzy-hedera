@@ -1,0 +1,28 @@
+# https://www.robotstxt.org/robotstxt.html
+
+# Allow all web crawlers
+User-agent: *
+Allow: /
+
+# Disallow access to sensitive areas
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /_next/
+Disallow: /db-error
+Disallow: /invite/
+
+# Disallow access to user-specific pages
+Disallow: /admin/
+Disallow: /dashboard/activity/
+Disallow: /dashboard/profile/
+Disallow: /dashboard/settings/
+Disallow: /dashboard/subscription/
+
+# Allow access to public pages
+Allow: /
+Allow: /pricing
+Allow: /terms
+Allow: /privacy
+
+# Crawl-delay for respectful crawling (in seconds)
+Crawl-delay: 1

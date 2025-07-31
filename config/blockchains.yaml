@@ -1,0 +1,162 @@
+# Blockchain Configuration
+# This file contains non-sensitive blockchain configuration
+# Sensitive data (admin keys, API keys) are stored in environment variables
+
+# Subscription pricing (in USD)
+subscriptionPricing:
+  pro: 3
+  enterprise: 5
+
+# Blockchain networks
+chains:
+  # Hedera Testnet
+  hederaTestnet:
+    enabled: true
+    chainId: 296
+    name: 'Hedera Testnet'
+    rpcUrl: 'https://testnet.hashio.io/api'
+    explorerUrl: 'https://hashscan.io/testnet'
+    logo: 'https://assets.coingecko.com/coins/images/3688/standard/hbar.png'
+    nativeCurrency:
+      name: 'HBAR'
+      symbol: 'HBAR'
+      decimals: 18
+    coingeckoId: 'hedera-hashgraph'
+    isTestnet: true
+    contractAddresses:
+      subscriptionManager: '0xF5FCDBe9d4247D76c7fa5d2E06dBA1e77887F518'
+      escrowCore: '0x761D0dbB45654513AdF1BF6b5D217C0f8B3c5737'
+      achievementNFT: '0x27E9062ee91A0D60De39984346cAeD53bE68024c'
+
+  # Hedera Mainnet
+  hederaMainnet:
+    enabled: true
+    chainId: 295
+    name: 'Hedera Mainnet'
+    rpcUrl: 'https://mainnet.hashio.io/api'
+    explorerUrl: 'https://hashscan.io/mainnet'
+    logo: 'https://assets.coingecko.com/coins/images/3688/standard/hbar.png'
+    nativeCurrency:
+      name: 'HBAR'
+      symbol: 'HBAR'
+      decimals: 18
+    coingeckoId: 'hedera-hashgraph'
+    isTestnet: false
+    contractAddresses:
+      subscriptionManager: ''
+      escrowCore: ''
+      achievementNFT: ''
+
+  # Base Sepolia
+  baseSepolia:
+    enabled: false
+    chainId: 84532
+    name: 'Base Sepolia'
+    rpcUrl: 'https://sepolia.base.org'
+    explorerUrl: 'https://sepolia.basescan.org'
+    logo: 'https://raw.githubusercontent.com/base/brand-kit/eba9e730be34f8c9ae7f9a21f32cc6aafebe2ad1/logo/TheSquare/Digital/Base_square_blue.svg'
+    nativeCurrency:
+      name: 'Ethereum'
+      symbol: 'ETH'
+      decimals: 18
+    coingeckoId: 'ethereum'
+    isTestnet: true
+    contractAddresses:
+      subscriptionManager: '0x9C2d41Cbde1e37A0d9C7e769594cCbc84d486835'
+      escrowCore: '0xA099937F48BEecd170EDdF20F66eb738F54d9b63'
+      achievementNFT: '0x79Dc4fbF279862ef631c01d6937A6fC31dfa6e2f'
+
+  # Base
+  base:
+    enabled: false
+    chainId: 8453
+    name: 'Base'
+    rpcUrl: 'https://mainnet.base.org'
+    explorerUrl: 'https://basescan.org'
+    logo: 'https://raw.githubusercontent.com/base/brand-kit/eba9e730be34f8c9ae7f9a21f32cc6aafebe2ad1/logo/TheSquare/Digital/Base_square_blue.svg'
+    nativeCurrency:
+      name: 'Ethereum'
+      symbol: 'ETH'
+      decimals: 18
+    coingeckoId: 'ethereum'
+    isTestnet: false
+    contractAddresses:
+      subscriptionManager: ''
+      escrowCore: ''
+      achievementNFT: ''
+
+  # Xlayer Testnet
+  xlayerTestnet:
+    enabled: false
+    chainId: 195
+    name: 'X Layer Testnet'
+    rpcUrl: 'https://testrpc.xlayer.tech'
+    explorerUrl: 'https://www.okx.com/web3/explorer/xlayer-test'
+    logo: 'https://static.okx.com/cdn/assets/imgs/243/230501A8E74482AB.png'
+    nativeCurrency:
+      name: 'OKB'
+      symbol: 'OKB'
+      decimals: 18
+    coingeckoId: 'okb'
+    isTestnet: true
+    contractAddresses:
+      subscriptionManager: ''
+      escrowCore: ''
+      achievementNFT: ''
+
+  # Xlayer Mainnet
+  xlayer:
+    enabled: false
+    chainId: 196
+    name: 'X Layer'
+    rpcUrl: 'https://rpc.xlayer.tech'
+    explorerUrl: 'https://www.okx.com/web3/explorer/xlayer'
+    logo: 'https://static.okx.com/cdn/assets/imgs/243/230501A8E74482AB.png'
+    nativeCurrency:
+      name: 'OKB'
+      symbol: 'OKB'
+      decimals: 18
+    coingeckoId: 'okb'
+    isTestnet: false
+    contractAddresses:
+      subscriptionManager: ''
+      escrowCore: ''
+      achievementNFT: ''
+
+  # Etherlink Testnet
+  etherlinkTestnet:
+    enabled: false
+    chainId: 128123
+    name: 'Etherlink Testnet'
+    rpcUrl: 'https://node.ghostnet.etherlink.com'
+    explorerUrl: 'https://testnet.explorer.etherlink.com'
+    logo: 'https://assets.coingecko.com/coins/images/976/standard/Tezos-logo.png'
+    nativeCurrency:
+      name: 'Tezos'
+      symbol: 'XTZ'
+      decimals: 18
+    coingeckoId: 'tezos'
+    isTestnet: true
+    contractAddresses:
+      subscriptionManager: '0x4AD722AEFf2D98ABB879aA4f7E907659263C3641'
+      escrowCore: '0x8b1B9DCa3dAc6A2fb0AE3518D1e33DC277fc7B25'
+      achievementNFT: '0xee946764766Fa09e54794F2a0aA3CB3A133e163E'
+
+  # Etherlink
+  etherlink:
+    enabled: false
+    chainId: 42793
+    name: 'Etherlink'
+    rpcUrl: 'https://node.mainnet.etherlink.com'
+    explorerUrl: 'https://explorer.etherlink.com'
+    logo: 'https://assets.coingecko.com/coins/images/976/standard/Tezos-logo.png'
+    nativeCurrency:
+      name: 'Tezos'
+      symbol: 'XTZ'
+      decimals: 18
+    coingeckoId: 'tezos'
+    isTestnet: false
+    contractAddresses:
+      subscriptionManager: ''
+      escrowCore: ''
+      achievementNFT: ''

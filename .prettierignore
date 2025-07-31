@@ -1,0 +1,33 @@
+# Ignore artifacts:
+build
+coverage
+node_modules
+.next
+.turbo
+out
+dist
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.idea
+.vscode
+
+# Logs
+logs
+*.log
+
+# OS
+.DS_Store
+
+# Dependencies
+pnpm-lock.yaml
+
+# Foundry/Contracts
+contracts/lib/
+contracts/cache/
+contracts/out/
+contracts/broadcast/

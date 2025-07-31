@@ -1,0 +1,26 @@
+# Foundry
+cache/
+out/
+broadcast/
+
+# Dependency directories
+lib/
+
+# Environment files (not used - all config comes from root .env)
+# These are here just in case someone accidentally creates them
+.env
+.env.local
+
+# Coverage
+lcov.info
+coverage/
+
+# Deployments
+deployments/*.json
+
+# OS files
+.DS_Store
+
+# Auto-generated files (regenerated from BLOCKCHAIN_CONFIG)
+foundry.toml
+deploy.sh
