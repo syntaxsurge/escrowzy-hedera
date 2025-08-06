@@ -1,24 +1,12 @@
-import { NextResponse } from 'next/server'
+import 'server-only'
 
-import { eq, and } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
-import { db } from '@/lib/db/drizzle'
-import { adminSettings } from '@/lib/db/schema'
+import { db } from '../drizzle'
+import { adminSettings } from '../schema'
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ type: string }> }
-) {
+export async function getLegalDocumentByType(type: 'terms' | 'privacy') {
   try {
-    const { type } = await params
-    const validTypes = ['terms', 'privacy']
-    if (!validTypes.includes(type)) {
-      return NextResponse.json(
-        { error: 'Invalid document type' },
-        { status: 400 }
-      )
-    }
-
     const settings = await db
       .select()
       .from(adminSettings)
@@ -39,24 +27,33 @@ export async function GET(
             )
           )
       )
+      .union(
+        db
+          .select()
+          .from(adminSettings)
+          .where(
+            and(
+              eq(adminSettings.category, 'legal'),
+              eq(adminSettings.key, `${type}_updated_at`)
+            )
+          )
+      )
 
     const titleSetting = settings.find(s => s.key === `${type}_title`)
     const contentSetting = settings.find(s => s.key === `${type}_content`)
+    const updatedAtSetting = settings.find(s => s.key === `${type}_updated_at`)
 
     if (!titleSetting || !contentSetting) {
-      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+      return null
     }
 
-    return NextResponse.json({
+    return {
       title: titleSetting.value || '',
       content: contentSetting.value || '',
-      lastUpdatedAt: contentSetting.updatedAt
-    })
+      lastUpdatedAt: updatedAtSetting?.value || contentSetting.updatedAt
+    }
   } catch (error) {
     console.error('Failed to fetch legal document:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch document' },
-      { status: 500 }
-    )
+    return null
   }
 }

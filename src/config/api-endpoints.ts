@@ -125,9 +125,6 @@ export const apiEndpoints = {
     track: '/api/transactions/track',
     status: '/api/transactions/status'
   },
-  legalDocuments: {
-    byType: (type: string) => `/api/legal-documents/${type}`
-  },
   trades: {
     base: '/api/trades',
     create: '/api/trades/create',
