@@ -116,7 +116,7 @@ export const CHAINS: Record<string, ChainConfig> = {
     shortName: 'fantom',
     nativeCurrency: { symbol: 'FTM', decimals: 18 },
     isTestnet: false,
-    okxSupported: false,
+    okxSupported: true,
     coingeckoId: 'fantom'
   },
   '25': {
@@ -125,16 +125,16 @@ export const CHAINS: Record<string, ChainConfig> = {
     shortName: 'cronos',
     nativeCurrency: { symbol: 'CRO', decimals: 18 },
     isTestnet: false,
-    okxSupported: false,
+    okxSupported: true,
     coingeckoId: 'crypto-com-chain'
   },
   '169': {
     chainId: '169',
-    name: 'Manta',
+    name: 'Manta Pacific',
     shortName: 'manta',
     nativeCurrency: { symbol: 'ETH', decimals: 18 },
     isTestnet: false,
-    okxSupported: false,
+    okxSupported: true,
     coingeckoId: 'ethereum'
   },
   '81457': {
@@ -143,7 +143,7 @@ export const CHAINS: Record<string, ChainConfig> = {
     shortName: 'blast',
     nativeCurrency: { symbol: 'ETH', decimals: 18 },
     isTestnet: false,
-    okxSupported: false,
+    okxSupported: true,
     coingeckoId: 'ethereum'
   },
   '196': {
@@ -154,6 +154,204 @@ export const CHAINS: Record<string, ChainConfig> = {
     isTestnet: false,
     okxSupported: true,
     coingeckoId: 'okb'
+  },
+  '100': {
+    chainId: '100',
+    name: 'Gnosis',
+    shortName: 'gnosis',
+    nativeCurrency: { symbol: 'XDAI', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'xdai'
+  },
+  '5000': {
+    chainId: '5000',
+    name: 'Mantle',
+    shortName: 'mantle',
+    nativeCurrency: { symbol: 'MNT', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'mantle'
+  },
+  '1101': {
+    chainId: '1101',
+    name: 'Polygon zkEVM',
+    shortName: 'polygon-zkevm',
+    nativeCurrency: { symbol: 'ETH', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'ethereum'
+  },
+  '66': {
+    chainId: '66',
+    name: 'OKTC',
+    shortName: 'oktc',
+    nativeCurrency: { symbol: 'OKT', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'oec-token'
+  },
+  '204': {
+    chainId: '204',
+    name: 'opBNB',
+    shortName: 'opbnb',
+    nativeCurrency: { symbol: 'BNB', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'binancecoin'
+  },
+  '167000': {
+    chainId: '167000',
+    name: 'Taiko',
+    shortName: 'taiko',
+    nativeCurrency: { symbol: 'ETH', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'ethereum'
+  },
+  '34443': {
+    chainId: '34443',
+    name: 'Mode',
+    shortName: 'mode',
+    nativeCurrency: { symbol: 'ETH', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'ethereum'
+  },
+  '7000': {
+    chainId: '7000',
+    name: 'Zeta',
+    shortName: 'zeta',
+    nativeCurrency: { symbol: 'ZETA', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'zetachain'
+  },
+  '4200': {
+    chainId: '4200',
+    name: 'Merlin',
+    shortName: 'merlin',
+    nativeCurrency: { symbol: 'BTC', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'bitcoin'
+  },
+  '369': {
+    chainId: '369',
+    name: 'PulseChain',
+    shortName: 'pulsechain',
+    nativeCurrency: { symbol: 'PLS', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'pulsechain'
+  },
+  '1329': {
+    chainId: '1329',
+    name: 'Sei EVM',
+    shortName: 'sei-evm',
+    nativeCurrency: { symbol: 'SEI', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'sei-network'
+  },
+  '33139': {
+    chainId: '33139',
+    name: 'ApeChain',
+    shortName: 'apechain',
+    nativeCurrency: { symbol: 'APE', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'apecoin'
+  },
+  '88888': {
+    chainId: '88888',
+    name: 'Chiliz Chain',
+    shortName: 'chiliz',
+    nativeCurrency: { symbol: 'CHZ', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'chiliz'
+  },
+  '13371': {
+    chainId: '13371',
+    name: 'Immutable zkEVM',
+    shortName: 'immutable-zkevm',
+    nativeCurrency: { symbol: 'IMX', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'immutable-x'
+  },
+  '130': {
+    chainId: '130',
+    name: 'Unichain',
+    shortName: 'unichain',
+    nativeCurrency: { symbol: 'ETH', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'ethereum'
+  },
+  '1030': {
+    chainId: '1030',
+    name: 'Conflux eSpace',
+    shortName: 'conflux',
+    nativeCurrency: { symbol: 'CFX', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'conflux-token'
+  },
+  '200901': {
+    chainId: '200901',
+    name: 'Bitlayer',
+    shortName: 'bitlayer',
+    nativeCurrency: { symbol: 'BTC', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'bitcoin'
+  },
+  '60808': {
+    chainId: '60808',
+    name: 'BOB',
+    shortName: 'bob',
+    nativeCurrency: { symbol: 'ETH', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'ethereum'
+  },
+  '10001': {
+    chainId: '10001',
+    name: 'EthereumPoW',
+    shortName: 'ethw',
+    nativeCurrency: { symbol: 'ETHW', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'ethereum-pow'
+  },
+  '4689': {
+    chainId: '4689',
+    name: 'IoTeX',
+    shortName: 'iotex',
+    nativeCurrency: { symbol: 'IOTX', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'iotex'
+  },
+  '146': {
+    chainId: '146',
+    name: 'Sonic',
+    shortName: 'sonic',
+    nativeCurrency: { symbol: 'S', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'sonic'
+  },
+  '223': {
+    chainId: '223',
+    name: 'B² Network',
+    shortName: 'b2',
+    nativeCurrency: { symbol: 'BTC', decimals: 18 },
+    isTestnet: false,
+    okxSupported: true,
+    coingeckoId: 'bitcoin'
   },
 
   // ============ TESTNETS ============
@@ -327,6 +525,14 @@ export const CHAINS: Record<string, ChainConfig> = {
     isTestnet: true,
     mainnetId: '196',
     okxSupported: false
+  },
+  '80094': {
+    chainId: '80094',
+    name: 'Berachain Testnet',
+    shortName: 'berachain-testnet',
+    nativeCurrency: { symbol: 'BERA', decimals: 18 },
+    isTestnet: true,
+    okxSupported: true
   }
 }
 
