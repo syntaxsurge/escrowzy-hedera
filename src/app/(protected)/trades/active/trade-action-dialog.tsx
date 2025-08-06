@@ -288,6 +288,10 @@ export function TradeActionDialog({
             let finalEscrowId = trade.escrowId
             let txHash = ''
 
+            // P2P trades already store amount in native currency (HBAR, ETH, etc.)
+            // No conversion needed for P2P trades
+            const nativeAmount = trade.amount
+
             // If no escrow exists, create one and fund it in the same transaction
             if (!finalEscrowId) {
               setIsCreatingEscrow(true)
@@ -304,7 +308,7 @@ export function TradeActionDialog({
               // Create and fund escrow in one transaction using autoFund
               const createResult = await createEscrow({
                 seller: tradeBuyerAddress as string, // Trade buyer will receive the crypto from escrow
-                amount: trade.amount,
+                amount: nativeAmount,
                 disputeWindow: 7 * 24 * 60 * 60, // 7 days
                 metadata: `Trade #${trade.id}`,
                 autoFund: true // This will fund the escrow in the same transaction
@@ -326,7 +330,7 @@ export function TradeActionDialog({
               setIsCreatingEscrow(false)
             } else {
               // Escrow already exists, just fund it
-              const fundTxHash = await fundEscrow(finalEscrowId, trade.amount)
+              const fundTxHash = await fundEscrow(finalEscrowId, nativeAmount)
 
               if (!fundTxHash) {
                 throw new Error('Failed to fund escrow')
