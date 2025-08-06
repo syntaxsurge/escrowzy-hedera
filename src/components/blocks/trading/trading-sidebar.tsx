@@ -14,6 +14,8 @@ import {
 
 import { DashboardHubSidebar } from '@/components/blocks/dashboard-hub-sidebar'
 import { appRoutes } from '@/config/app-routes'
+import { useUnifiedChainInfo } from '@/context/blockchain'
+import { isChainSupportedByOKX } from '@/lib/config/chain-mappings'
 
 interface TradingSidebarProps {
   activeTrades?: number
@@ -22,72 +24,82 @@ interface TradingSidebarProps {
   className?: string
 }
 
-const navigationItems = [
-  {
-    title: 'Trading Dashboard',
-    href: appRoutes.trades.base,
-    icon: Zap,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'hover:bg-purple-500/10'
-  },
-  {
-    title: 'Active Trades',
-    href: appRoutes.trades.active,
-    icon: TrendingUp,
-    badge: 'activeTrades',
-    color: 'text-yellow-600 dark:text-yellow-400',
-    bgColor: 'hover:bg-yellow-500/10'
-  },
-  {
-    title: 'Browse Marketplace',
-    href: appRoutes.trades.listings.base,
-    icon: ShoppingCart,
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'hover:bg-blue-500/10'
-  },
-  {
-    title: 'Create Listing',
-    href: appRoutes.trades.listings.create,
-    icon: Plus,
-    color: 'text-emerald-600 dark:text-emerald-400',
-    bgColor: 'hover:bg-emerald-500/10'
-  },
-  {
-    title: 'My Listings',
-    href: appRoutes.trades.myListings,
-    icon: ListPlus,
-    color: 'text-green-600 dark:text-green-400',
-    bgColor: 'hover:bg-green-500/10'
-  },
-  {
-    title: 'Trade History',
-    href: appRoutes.trades.history.base,
-    icon: Clock,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'hover:bg-purple-500/10'
-  },
-  {
-    title: 'Token Swap',
-    href: appRoutes.trades.swap,
-    icon: ArrowDownUp,
-    color: 'text-indigo-600 dark:text-indigo-400',
-    bgColor: 'hover:bg-indigo-500/10'
-  },
-  {
-    title: 'Trading Chats',
-    href: appRoutes.withParams.tradesTab(appRoutes.chat.base),
-    icon: MessageSquare,
-    color: 'text-pink-600 dark:text-pink-400',
-    bgColor: 'hover:bg-pink-500/10'
-  }
-]
-
 export function TradingSidebar({
   activeTrades = 0,
   disputedTrades = 0,
   activeListings = 0,
   className
 }: TradingSidebarProps) {
+  const { chainId } = useUnifiedChainInfo()
+  const isSwapSupported = chainId ? isChainSupportedByOKX(chainId) : false
+
+  const baseNavigationItems = [
+    {
+      title: 'Trading Dashboard',
+      href: appRoutes.trades.base,
+      icon: Zap,
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'hover:bg-purple-500/10'
+    },
+    {
+      title: 'Active Trades',
+      href: appRoutes.trades.active,
+      icon: TrendingUp,
+      badge: 'activeTrades',
+      color: 'text-yellow-600 dark:text-yellow-400',
+      bgColor: 'hover:bg-yellow-500/10'
+    },
+    {
+      title: 'Browse Marketplace',
+      href: appRoutes.trades.listings.base,
+      icon: ShoppingCart,
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'hover:bg-blue-500/10'
+    },
+    {
+      title: 'Create Listing',
+      href: appRoutes.trades.listings.create,
+      icon: Plus,
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bgColor: 'hover:bg-emerald-500/10'
+    },
+    {
+      title: 'My Listings',
+      href: appRoutes.trades.myListings,
+      icon: ListPlus,
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'hover:bg-green-500/10'
+    },
+    {
+      title: 'Trade History',
+      href: appRoutes.trades.history.base,
+      icon: Clock,
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'hover:bg-purple-500/10'
+    },
+    {
+      title: 'Trading Chats',
+      href: appRoutes.withParams.tradesTab(appRoutes.chat.base),
+      icon: MessageSquare,
+      color: 'text-pink-600 dark:text-pink-400',
+      bgColor: 'hover:bg-pink-500/10'
+    }
+  ]
+
+  // Add Token Swap only if the chain is supported
+  const navigationItems = isSwapSupported
+    ? [
+        ...baseNavigationItems.slice(0, 6),
+        {
+          title: 'Token Swap',
+          href: appRoutes.trades.swap,
+          icon: ArrowDownUp,
+          color: 'text-indigo-600 dark:text-indigo-400',
+          bgColor: 'hover:bg-indigo-500/10'
+        },
+        ...baseNavigationItems.slice(6)
+      ]
+    : baseNavigationItems
   const stats = {
     activeTrades,
     activeListings

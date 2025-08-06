@@ -319,24 +319,6 @@ export const CHAINS: Record<string, ChainConfig> = {
     mainnetId: '534352',
     okxSupported: false
   },
-  '128123': {
-    chainId: '128123',
-    name: 'Etherlink Testnet',
-    shortName: 'etherlink-testnet',
-    nativeCurrency: { symbol: 'XTZ', decimals: 18 },
-    isTestnet: true,
-    mainnetId: '1', // Map to Ethereum for pricing
-    okxSupported: false
-  },
-  '296': {
-    chainId: '296',
-    name: 'Hedera Testnet',
-    shortName: 'hedera-testnet',
-    nativeCurrency: { symbol: 'HBAR', decimals: 8 },
-    isTestnet: true,
-    mainnetId: '56', // Map to BSC for similar market cap
-    okxSupported: false
-  },
   '195': {
     chainId: '195',
     name: 'X Layer Testnet',

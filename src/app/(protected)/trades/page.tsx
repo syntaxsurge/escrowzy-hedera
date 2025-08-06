@@ -118,7 +118,6 @@ export default function TradingHubDashboard() {
     }
   )
 
-  // Fetch OKX DEX market data
   useEffect(() => {
     let mounted = true
     let timeoutId: NodeJS.Timeout
@@ -418,10 +417,10 @@ export default function TradingHubDashboard() {
                   </div>
                   <div>
                     <CardTitle className='text-xl font-black'>
-                      OKX DEX MARKET DATA
+                      DEX MARKET DATA
                     </CardTitle>
                     <CardDescription>
-                      Real-time pricing powered by OKX DEX API
+                      Real-time pricing powered by CoinGecko API and OKX API
                     </CardDescription>
                   </div>
                 </div>

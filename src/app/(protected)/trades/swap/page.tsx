@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import useSWR from 'swr'
 
+import { UnsupportedChainForSwap } from '@/components/blocks/swap/unsupported-chain'
 import {
   GamifiedHeader,
   GamifiedStatsCards,
@@ -32,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
 import { useUnifiedChainInfo } from '@/context'
+import { isChainSupportedByOKX } from '@/lib/config/chain-mappings'
 import { formatCurrency } from '@/lib/utils/string'
 import { buildApiUrl } from '@/lib/utils/url'
 
@@ -43,6 +45,14 @@ export default function SwapPage() {
   )
   const { chainId } = useUnifiedChainInfo()
   const [autoRefresh] = useState(true)
+
+  // Check if current chain is supported by OKX
+  const isChainSupported = chainId ? isChainSupportedByOKX(chainId) : false
+
+  // If chain is not supported, show the unsupported chain message
+  if (!isChainSupported) {
+    return <UnsupportedChainForSwap />
+  }
 
   // Fetch real market statistics from OKX API
   const { data: marketStats, error: marketError } = useSWR(
