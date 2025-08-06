@@ -459,7 +459,15 @@ export function getCoingeckoId(chainId: string | number): string | undefined {
  * Get chain index for OKX API (maps testnets to mainnets)
  */
 export function getChainIndex(chainId: string | number): string {
-  return getMainnetChainId(chainId)
+  const config = getChainConfig(chainId)
+
+  // Only return a mainnet mapping if the chain is supported by OKX
+  if (config?.okxSupported) {
+    return getMainnetChainId(chainId)
+  }
+
+  // For unsupported chains, throw an error instead of returning a wrong chain ID
+  throw new Error(`Chain ${chainId} is not supported by OKX DEX`)
 }
 
 /**

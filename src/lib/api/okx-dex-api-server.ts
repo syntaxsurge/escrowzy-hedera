@@ -1,6 +1,9 @@
 import { apiEndpoints } from '@/config/api-endpoints'
 import { envServer } from '@/config/env.server'
-import { getChainIndex } from '@/lib/config/chain-mappings'
+import {
+  getChainIndex,
+  isChainSupportedByOKX
+} from '@/lib/config/chain-mappings'
 import type {
   OKXBaseResponse,
   OKXTokenInfo,
@@ -194,6 +197,11 @@ export abstract class OKXDexAPIServer {
    * Get token price
    */
   async getTokenPrice(tokenAddress: string, chainId: string): Promise<number> {
+    // Check if the chain is supported by OKX first
+    if (!isChainSupportedByOKX(chainId)) {
+      throw new Error(`Chain ${chainId} is not supported by OKX DEX`)
+    }
+
     const chainIndex = getChainIndex(chainId)
     const response = await this.request<OKXBaseResponse<any[]>>(
       apiEndpoints.external.okxDex.endpoints.marketPrice,

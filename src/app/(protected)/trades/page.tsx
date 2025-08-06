@@ -133,13 +133,17 @@ export default function TradingHubDashboard() {
         const { getChainMetadata } = await import('@/lib/blockchain')
 
         const currentChainId = chainId || DEFAULT_CHAIN_ID
-        const okxChainName =
-          await okxDexClient.getChainNameFromId(currentChainId)
+        const isSupported = await okxDexClient.isChainSupported(currentChainId)
         const chainMeta = getChainMetadata(currentChainId)
         const coingeckoId = chainMeta?.coingeckoId || currency.toLowerCase()
 
-        // Use OKX chain name if supported, otherwise use the chain's name from metadata
-        // This ensures we pass the correct chain context even for unsupported chains
+        // If chain is not supported by OKX, we'll only get CoinGecko data
+        if (!isSupported) {
+          console.log(`Chain ${currentChainId} not supported by OKX DEX`)
+        }
+
+        const okxChainName =
+          await okxDexClient.getChainNameFromId(currentChainId)
         const chainName =
           okxChainName || chainMeta?.name?.toLowerCase() || 'ethereum'
 
@@ -433,7 +437,15 @@ export default function TradingHubDashboard() {
                 <PriceDisplay
                   title='OKX DEX Price'
                   price={okxDexData?.okxDexPrice || null}
-                  error={okxDexData?.okxDexError}
+                  error={
+                    okxDexData?.okxDexError ||
+                    (!okxDexData?.okxDexPrice && !loadingOkxData
+                      ? {
+                          type: 'chain_not_supported',
+                          message: 'Chain not supported'
+                        }
+                      : undefined)
+                  }
                   loading={loadingOkxData}
                   currency={`${currency}/USD`}
                 />
