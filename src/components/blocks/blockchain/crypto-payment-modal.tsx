@@ -24,7 +24,7 @@ import { api } from '@/lib/api/http-client'
 import { buildTxUrl } from '@/lib/blockchain'
 import { formatCurrency } from '@/lib/utils/string'
 import { formatTeamMemberLimit } from '@/lib/utils/subscription'
-import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
+import { SubscriptionManagerClientService } from '@/services/blockchain/subscription-manager-client.service'
 import { type PaymentIntent } from '@/types/payment'
 
 interface CryptoPaymentModalProps {
@@ -129,7 +129,7 @@ export function CryptoPaymentModal({
     if (!paymentIntent || !address) return
 
     try {
-      const subscriptionService = new SubscriptionManagerService(
+      const subscriptionService = new SubscriptionManagerClientService(
         paymentIntent.networkId
       )
       const config = subscriptionService.getTransactionConfig(

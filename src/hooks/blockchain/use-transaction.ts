@@ -37,7 +37,7 @@ import {
   getBlockExplorerUrl
 } from '@/lib/blockchain/blockchain-transaction'
 import { thirdwebClient } from '@/lib/blockchain/thirdweb-client'
-import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
+import { SubscriptionManagerClientService } from '@/services/blockchain/subscription-manager-client.service'
 import { type TransactionStatus } from '@/types/transaction'
 
 // ============================================================================
@@ -703,8 +703,8 @@ export function useAdminTransaction() {
         effectiveChainId
       )
 
-      // Use the SubscriptionManagerService's transaction config
-      const subscriptionService = new SubscriptionManagerService(
+      // Use the SubscriptionManagerClientService's transaction config
+      const subscriptionService = new SubscriptionManagerClientService(
         effectiveChainId
       )
       const config = subscriptionService.getTransactionConfig(
@@ -732,7 +732,7 @@ export function useAdminTransaction() {
     chainId: number
   ): any[] => {
     // Use centralized parameter preparation for subscription manager
-    const subscriptionService = new SubscriptionManagerService(chainId)
+    const subscriptionService = new SubscriptionManagerClientService(chainId)
     return subscriptionService.contractAddress
       ? subscriptionService.prepareSubscriptionParams(
           method,

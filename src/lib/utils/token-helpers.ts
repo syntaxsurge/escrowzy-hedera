@@ -256,3 +256,120 @@ export function calculateEscrowAmounts(
     totalAmount: total
   }
 }
+
+/**
+ * Get the current price of a cryptocurrency from the API
+ * This is a client-safe function that calls the backend API
+ *
+ * @param symbol - The cryptocurrency symbol (e.g., 'ETH', 'BTC')
+ * @param coingeckoId - The CoinGecko ID (e.g., 'ethereum', 'bitcoin')
+ * @returns The current USD price or null if unavailable
+ */
+async function getClientSafePrice(
+  symbol: string,
+  coingeckoId?: string
+): Promise<number | null> {
+  try {
+    const response = await fetch('/api/prices', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        symbol,
+        coingeckoId: coingeckoId || symbol.toLowerCase()
+      })
+    })
+
+    if (!response.ok) {
+      console.error('Failed to fetch price:', response.statusText)
+      return null
+    }
+
+    const data = await response.json()
+    return data.price || null
+  } catch (error) {
+    console.error('Error fetching price:', error)
+    return null
+  }
+}
+
+/**
+ * Convert USD amount to native token smallest unit (wei, tinybar, etc.)
+ * Client-safe version that fetches prices from API
+ *
+ * @param usdAmount - The USD amount to convert
+ * @param chainId - The chain ID
+ * @returns The amount in smallest units as bigint
+ */
+export async function convertUSDToWei(
+  usdAmount: number,
+  chainId: number
+): Promise<bigint> {
+  if (usdAmount === 0) {
+    return BigInt(0)
+  }
+
+  try {
+    // Import blockchain utilities dynamically to avoid circular dependencies
+    const { getNativeCurrencySymbol, getCoingeckoPriceId } = await import(
+      '@/lib/blockchain'
+    )
+
+    const coingeckoId = getCoingeckoPriceId(chainId)
+    const symbol = getNativeCurrencySymbol(chainId)
+
+    const price = await getClientSafePrice(symbol, coingeckoId)
+
+    if (!price || price <= 0) {
+      throw new Error('Unable to fetch current price')
+    }
+
+    const nativeAmount = usdAmount / price
+    return parseNativeAmount(nativeAmount.toString(), chainId)
+  } catch (error) {
+    throw new Error(
+      `Failed to convert USD to Wei: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
+  }
+}
+
+/**
+ * Convert native token smallest unit to USD
+ * Client-safe version that fetches prices from API
+ *
+ * @param weiAmount - The amount in smallest units
+ * @param chainId - The chain ID
+ * @returns The USD amount
+ */
+export async function convertWeiToUSD(
+  weiAmount: bigint,
+  chainId: number
+): Promise<number> {
+  if (weiAmount === BigInt(0)) {
+    return 0
+  }
+
+  try {
+    // Import blockchain utilities dynamically to avoid circular dependencies
+    const { getNativeCurrencySymbol, getCoingeckoPriceId } = await import(
+      '@/lib/blockchain'
+    )
+
+    const coingeckoId = getCoingeckoPriceId(chainId)
+    const symbol = getNativeCurrencySymbol(chainId)
+
+    const price = await getClientSafePrice(symbol, coingeckoId)
+
+    if (!price || price <= 0) {
+      throw new Error('Unable to fetch current price')
+    }
+
+    const nativeAmount = Number(formatNativeAmount(weiAmount, chainId))
+    return nativeAmount * price
+  } catch (error) {
+    throw new Error(
+      `Failed to convert Wei to USD: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
+  }
+}

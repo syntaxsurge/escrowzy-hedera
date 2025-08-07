@@ -5,6 +5,7 @@ import { ethers } from 'ethers'
 import { apiResponses } from '@/lib/api/server-utils'
 import { getSession } from '@/lib/auth/session'
 import { isSupportedChainId } from '@/lib/blockchain'
+import { formatCurrency } from '@/lib/utils/string'
 import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 
 // GET /api/admin/contract-plans/[planKey] - Get plan by key from smart contract
@@ -51,12 +52,11 @@ export async function GET(
     }
 
     const plan = await contractService.getPlan(planKeyNum)
+    const priceUSD = await contractService.convertWeiToUSD(plan.priceWei)
     const planWithUSDPrice = {
       ...plan,
-      priceUSD: await contractService.convertWeiToUSD(plan.priceWei),
-      priceFormatted: await contractService.formatPriceForDisplay(
-        plan.priceWei
-      ),
+      priceUSD,
+      priceFormatted: formatCurrency(priceUSD, { currency: 'USD' }),
       maxMembersFormatted:
         plan.maxMembers === ethers.MaxUint256
           ? 'Unlimited'

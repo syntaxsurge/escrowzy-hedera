@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 
 import { withSubscriptionValidation } from '@/lib/blockchain/contract-validation'
+import { formatCurrency } from '@/lib/utils/string'
 import { formatNativeAmount } from '@/lib/utils/token-helpers'
 
 // GET /api/admin/contract-plans - Get all plans from smart contract
@@ -22,30 +23,33 @@ export const GET = withSubscriptionValidation(
 
     // Convert Wei prices to USD for display and serialize BigInt values
     const plansWithUSDPrices = await Promise.all(
-      plans.map(async plan => ({
-        planKey: plan.planKey,
-        name: plan.name,
-        displayName: plan.displayName,
-        description: plan.description,
-        priceWei: plan.priceWei.toString(), // Convert BigInt to string
-        priceUSD: await subscriptionService.convertWeiToUSD(plan.priceWei),
-        priceFormatted: await subscriptionService.formatPriceForDisplay(
+      plans.map(async plan => {
+        const priceUSD = await subscriptionService.convertWeiToUSD(
           plan.priceWei
-        ),
-        priceNative: Number(
-          formatNativeAmount(plan.priceWei, contractInfo.chainId)
-        ),
-        maxMembers: plan.maxMembers, // This will be serialized below
-        maxMembersFormatted:
-          plan.maxMembers === ethers.MaxUint256
-            ? 'Unlimited'
-            : plan.maxMembers.toString(),
-        features: plan.features,
-        isActive: plan.isActive,
-        sortOrder: plan.sortOrder, // This will be serialized below
-        isTeamPlan: plan.isTeamPlan || false,
-        feeTierBasisPoints: plan.feeTierBasisPoints // This will be serialized below
-      }))
+        )
+        return {
+          planKey: plan.planKey,
+          name: plan.name,
+          displayName: plan.displayName,
+          description: plan.description,
+          priceWei: plan.priceWei.toString(), // Convert BigInt to string
+          priceUSD,
+          priceFormatted: formatCurrency(priceUSD, { currency: 'USD' }),
+          priceNative: Number(
+            formatNativeAmount(plan.priceWei, contractInfo.chainId)
+          ),
+          maxMembers: plan.maxMembers, // This will be serialized below
+          maxMembersFormatted:
+            plan.maxMembers === ethers.MaxUint256
+              ? 'Unlimited'
+              : plan.maxMembers.toString(),
+          features: plan.features,
+          isActive: plan.isActive,
+          sortOrder: plan.sortOrder, // This will be serialized below
+          isTeamPlan: plan.isTeamPlan || false,
+          feeTierBasisPoints: plan.feeTierBasisPoints // This will be serialized below
+        }
+      })
     )
 
     // Serialize BigInt values to strings for JSON response
