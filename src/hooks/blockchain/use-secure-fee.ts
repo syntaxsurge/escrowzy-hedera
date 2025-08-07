@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 
+import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
 
 interface FeeCalculationResult {
@@ -50,7 +51,7 @@ export function useSecureFee() {
       try {
         setIsLoading(true)
 
-        const response = await fetch('/api/trades/calculate-fee', {
+        const response = await fetch(apiEndpoints.trades.calculateFee, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -108,7 +109,7 @@ export function useSecureFee() {
       try {
         setIsLoading(true)
 
-        const response = await fetch('/api/trades/validate-fee', {
+        const response = await fetch(apiEndpoints.trades.validateFee, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

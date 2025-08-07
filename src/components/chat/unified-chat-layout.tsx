@@ -8,9 +8,9 @@ import { Loader2, Users } from 'lucide-react'
 
 import { UserAvatar } from '@/components/blocks/user-avatar'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { useChat } from '@/hooks/use-chat'
-import { useInfiniteMessages } from '@/hooks/use-infinite-messages'
-import { useUnreadMessages } from '@/hooks/use-unread-messages'
+import { useChat } from '@/hooks/chat/use-chat'
+import { useInfiniteMessages } from '@/hooks/chat/use-infinite-messages'
+import { useUnreadMessages } from '@/hooks/chat/use-unread-messages'
 import { uploadAttachmentsAction } from '@/lib/actions/attachment'
 import {
   MessageWithSender,

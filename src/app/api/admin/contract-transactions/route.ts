@@ -1,136 +1,58 @@
 import { NextRequest } from 'next/server'
 
-import { ethers } from 'ethers'
-
 import { apiResponses } from '@/lib/api/server-utils'
-import { getSession } from '@/lib/auth/session'
-import { isSupportedChainId } from '@/lib/blockchain'
+import { validateSubscriptionRequest } from '@/lib/blockchain/contract-validation'
 import { parseNativeAmount } from '@/lib/utils/token-helpers'
 import {
-  createContractPlanService,
-  type CreatePlanParams
-} from '@/services/blockchain/contract-plan'
+  type CreatePlanParams,
+  type UpdatePlanParams,
+  type DeletePlanParams,
+  type WithdrawEarningsParams,
+  type SetPlanPriceParams
+} from '@/services/blockchain/subscription-manager.service'
 
-// POST /api/admin/contract-transactions - Prepare transaction data for wallet signing
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession()
+    // Validate request and get service
+    const validationResult = await validateSubscriptionRequest(request)
 
-    if (!session?.user) {
-      return apiResponses.unauthorized()
+    if ('error' in validationResult) {
+      return validationResult.error
     }
 
+    const { subscriptionService, chainId } = validationResult
     const body = await request.json()
-    const { action, chainId, ...params } = body
+    const { action, ...params } = body
 
-    if (!chainId || !isSupportedChainId(chainId)) {
-      return apiResponses.error(
-        `Unsupported or invalid chain ID: ${chainId}. Please connect to a supported network.`,
-        400
-      )
-    }
-
-    const contractService = createContractPlanService(chainId)
-
-    if (!contractService) {
-      return apiResponses.error(
-        `Contract not configured for chain ${chainId}. Please check your environment configuration.`,
-        400
-      )
-    }
-
-    const contractInfo = await contractService.getContractInfo()
+    const contractInfo = await subscriptionService.getContractInfo()
 
     switch (action) {
       case 'createPlan': {
-        const {
-          name,
-          displayName,
-          description,
-          priceUSD,
-          maxMembers,
-          features,
-          isActive = true,
-          sortOrder = 0,
-          isTeamPlan = false
-        } = params as Omit<CreatePlanParams, 'planKey'>
-
-        // Validate required fields
-        if (
-          !name ||
-          !displayName ||
-          priceUSD === undefined ||
-          maxMembers === undefined ||
-          !features
-        ) {
-          return apiResponses.validationError(
-            [
-              'name',
-              'displayName',
-              'priceUSD',
-              'maxMembers',
-              'features'
-            ].filter(field => {
-              const values: Record<string, any> = {
-                name,
-                displayName,
-                priceUSD,
-                maxMembers,
-                features
-              }
-              return (
-                values[field] === undefined ||
-                values[field] === null ||
-                values[field] === ''
-              )
-            })
-          )
-        }
-
-        // Validate features array
-        if (!Array.isArray(features) || features.length === 0) {
-          return apiResponses.error('Features must be a non-empty array', 400)
-        }
-
-        // Validate price
-        if (typeof priceUSD !== 'number' || priceUSD < 0) {
-          return apiResponses.error(
-            'Price must be a valid positive number',
-            400
-          )
-        }
-
-        // Validate maxMembers
-        if (
-          !Number.isInteger(maxMembers) ||
-          (maxMembers < 1 && maxMembers !== -1)
-        ) {
-          return apiResponses.error(
-            'Max members must be a positive integer or -1 for unlimited',
-            400
-          )
-        }
-
         // Get next available plan key
-        const planKey = await contractService.getNextAvailablePlanKey()
+        const planKey = await subscriptionService.getNextAvailablePlanKey()
+
+        // Direct type assertion - TypeScript will enforce required fields
+        const createParams: CreatePlanParams = {
+          planKey,
+          ...params
+        }
 
         // Convert USD to wei
-        const priceWei = await contractService.convertUSDToWei(priceUSD)
+        const priceWei = await subscriptionService.convertUSDToWei(
+          createParams.priceUSD
+        )
 
         // Prepare transaction data
-        const iface = new ethers.Interface(contractInfo.abi)
-        const data = iface.encodeFunctionData('createPlan', [
-          planKey,
-          name,
-          displayName,
-          description,
-          priceWei,
-          maxMembers === -1 ? ethers.MaxUint256 : maxMembers,
-          features,
-          isActive,
-          sortOrder,
-          isTeamPlan
-        ])
+        const data = subscriptionService.encodeContractFunctionData(
+          'createPlan',
+          subscriptionService.prepareSubscriptionParams(
+            'createPlan',
+            createParams,
+            {
+              priceWei: priceWei.toString()
+            }
+          )
+        )
 
         return apiResponses.success({
           transactionData: {
@@ -145,71 +67,25 @@ export async function POST(request: NextRequest) {
       }
 
       case 'updatePlan': {
-        const {
-          planKey,
-          name,
-          displayName,
-          description,
-          priceUSD,
-          maxMembers,
-          features,
-          isActive = true,
-          sortOrder = 0,
-          isTeamPlan = false
-        } = params
-
-        // Validate required fields
-        if (
-          planKey === undefined ||
-          !name ||
-          !displayName ||
-          priceUSD === undefined ||
-          maxMembers === undefined ||
-          !features
-        ) {
-          return apiResponses.validationError(
-            [
-              'planKey',
-              'name',
-              'displayName',
-              'priceUSD',
-              'maxMembers',
-              'features'
-            ].filter(field => {
-              const values: Record<string, any> = {
-                planKey,
-                name,
-                displayName,
-                priceUSD,
-                maxMembers,
-                features
-              }
-              return (
-                values[field] === undefined ||
-                values[field] === null ||
-                values[field] === ''
-              )
-            })
-          )
-        }
+        // Direct type assertion - TypeScript will enforce required fields
+        const updateParams: UpdatePlanParams = params
 
         // Convert USD to wei
-        const priceWei = await contractService.convertUSDToWei(priceUSD)
+        const priceWei = await subscriptionService.convertUSDToWei(
+          updateParams.priceUSD
+        )
 
         // Prepare transaction data
-        const iface = new ethers.Interface(contractInfo.abi)
-        const data = iface.encodeFunctionData('updatePlan', [
-          planKey,
-          name,
-          displayName,
-          description,
-          priceWei,
-          maxMembers === -1 ? ethers.MaxUint256 : maxMembers,
-          features,
-          isActive,
-          sortOrder,
-          isTeamPlan
-        ])
+        const data = subscriptionService.encodeContractFunctionData(
+          'updatePlan',
+          subscriptionService.prepareSubscriptionParams(
+            'updatePlan',
+            updateParams,
+            {
+              priceWei: priceWei.toString()
+            }
+          )
+        )
 
         return apiResponses.success({
           transactionData: {
@@ -217,22 +93,24 @@ export async function POST(request: NextRequest) {
             data,
             value: '0x0'
           },
-          planKey,
+          planKey: updateParams.planKey,
           priceWei: priceWei.toString(),
           contractInfo
         })
       }
 
       case 'deletePlan': {
-        const { planKey } = params
-
-        if (planKey === undefined) {
-          return apiResponses.validationError(['planKey'])
-        }
+        // Direct type assertion - TypeScript will enforce required fields
+        const deleteParams: DeletePlanParams = params
 
         // Prepare transaction data
-        const iface = new ethers.Interface(contractInfo.abi)
-        const data = iface.encodeFunctionData('deletePlan', [planKey])
+        const data = subscriptionService.encodeContractFunctionData(
+          'deletePlan',
+          subscriptionService.prepareSubscriptionParams(
+            'deletePlan',
+            deleteParams
+          )
+        )
 
         return apiResponses.success({
           transactionData: {
@@ -240,29 +118,32 @@ export async function POST(request: NextRequest) {
             data,
             value: '0x0'
           },
-          planKey,
+          planKey: deleteParams.planKey,
           contractInfo
         })
       }
 
       case 'withdrawEarnings': {
-        const { to, amountNative } = params
-
-        if (!to || !amountNative) {
-          return apiResponses.validationError(
-            ['to', 'amountNative'].filter(field => !{ to, amountNative }[field])
-          )
-        }
+        // Direct type assertion - TypeScript will enforce required fields
+        const withdrawParams: WithdrawEarningsParams = params
 
         // Convert native amount to smallest unit using chain-specific decimals
-        const amountWei = parseNativeAmount(amountNative.toString(), chainId)
+        const amountWei = parseNativeAmount(
+          withdrawParams.amountNative.toString(),
+          chainId
+        )
 
         // Prepare transaction data
-        const iface = new ethers.Interface(contractInfo.abi)
-        const data = iface.encodeFunctionData('withdrawEarnings', [
-          to,
-          amountWei
-        ])
+        const data = subscriptionService.encodeContractFunctionData(
+          'withdrawEarnings',
+          subscriptionService.prepareSubscriptionParams(
+            'withdrawEarnings',
+            withdrawParams,
+            {
+              amountWei: amountWei.toString()
+            }
+          )
+        )
 
         return apiResponses.success({
           transactionData: {
@@ -276,29 +157,25 @@ export async function POST(request: NextRequest) {
       }
 
       case 'setPlanPrice': {
-        const { planKey, priceUSD } = params
-
-        if (planKey === undefined || priceUSD === undefined) {
-          return apiResponses.validationError(['planKey', 'priceUSD'])
-        }
-
-        // Validate price
-        if (typeof priceUSD !== 'number' || priceUSD < 0) {
-          return apiResponses.error(
-            'Price must be a valid positive number',
-            400
-          )
-        }
+        // Direct type assertion - TypeScript will enforce required fields
+        const priceParams: SetPlanPriceParams = params
 
         // Convert USD to wei
-        const priceWei = await contractService.convertUSDToWei(priceUSD)
+        const priceWei = await subscriptionService.convertUSDToWei(
+          priceParams.priceUSD
+        )
 
         // Prepare transaction data
-        const iface = new ethers.Interface(contractInfo.abi)
-        const data = iface.encodeFunctionData('setPlanPrice', [
-          planKey,
-          priceWei
-        ])
+        const data = subscriptionService.encodeContractFunctionData(
+          'setPlanPrice',
+          subscriptionService.prepareSubscriptionParams(
+            'setPlanPrice',
+            priceParams,
+            {
+              priceWei: priceWei.toString()
+            }
+          )
+        )
 
         return apiResponses.success({
           transactionData: {
@@ -306,7 +183,7 @@ export async function POST(request: NextRequest) {
             data,
             value: '0x0'
           },
-          planKey,
+          planKey: priceParams.planKey,
           priceWei: priceWei.toString(),
           contractInfo
         })

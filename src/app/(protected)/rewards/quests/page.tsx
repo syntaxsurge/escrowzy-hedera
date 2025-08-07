@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useRewards } from '@/hooks/use-rewards'
+import { useRewards } from '@/hooks/gaming/use-rewards'
 import { useSession } from '@/hooks/use-session'
 import { cn } from '@/lib'
 

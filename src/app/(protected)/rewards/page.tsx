@@ -31,7 +31,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { appRoutes } from '@/config/app-routes'
-import { useRewards } from '@/hooks/use-rewards'
+import { useRewards } from '@/hooks/gaming/use-rewards'
 import { useSession } from '@/hooks/use-session'
 
 export default function RewardsPage() {

@@ -140,7 +140,9 @@ export default function SwapPage() {
     {
       title: `${marketStats?.stats?.nativeTokenSymbol || 'ETH'} Price`,
       value: marketStats?.stats?.nativeTokenPrice
-        ? formatCurrency(marketStats.stats.nativeTokenPrice, 'USD')
+        ? formatCurrency(marketStats.stats.nativeTokenPrice, {
+            currency: 'USD'
+          })
         : '',
       subtitle:
         marketStats?.stats?.nativeToken24hChange !== undefined

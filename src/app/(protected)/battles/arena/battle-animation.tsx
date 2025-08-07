@@ -23,7 +23,7 @@ import {
   BATTLE_MESSAGES,
   BATTLE_ICONS
 } from '@/config/battle.config'
-import { useBattleRealtime } from '@/hooks/use-battle-realtime'
+import { useBattleRealtime } from '@/hooks/notification/use-battle-realtime'
 import { useSession } from '@/hooks/use-session'
 import { cn } from '@/lib'
 import { api } from '@/lib/api/http-client'

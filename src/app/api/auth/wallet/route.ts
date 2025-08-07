@@ -4,7 +4,6 @@ import { eq } from 'drizzle-orm'
 import requestIp from 'request-ip'
 import { verifyMessage } from 'viem'
 
-import { truncateAddress } from '@/lib'
 import { apiResponses } from '@/lib/api/server-utils'
 import { authRateLimit } from '@/lib/auth/rate-limit'
 import { setSession, getSession, clearSession } from '@/lib/auth/session'
@@ -18,6 +17,7 @@ import {
   activityLogs,
   users
 } from '@/lib/db/schema'
+import { truncateAddress } from '@/lib/utils/string'
 
 export async function POST(request: NextRequest) {
   // Apply rate limiting

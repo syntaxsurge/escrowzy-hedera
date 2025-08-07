@@ -201,7 +201,7 @@ export function TradeHistoryTable({
         )
       },
       amount: (trade: TradeWithUsers) =>
-        formatCurrency(trade.amount, trade.currency),
+        formatCurrency(trade.amount, { currency: trade.currency }),
       status: (trade: TradeWithUsers) => getStatusBadge(trade.status),
       action: (trade: TradeWithUsers) => (
         <Button

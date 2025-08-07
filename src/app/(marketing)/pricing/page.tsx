@@ -57,7 +57,7 @@ import {
   buildTxUrl,
   SUPPORTED_NETWORKS
 } from '@/lib/blockchain'
-import { formatPrice, formatPriceWithCurrency } from '@/lib/blockchain/payment'
+import { formatCurrency } from '@/lib/utils/string'
 import {
   canUpgradeToPlan,
   formatTeamMemberLimit
@@ -1505,7 +1505,7 @@ function PricingCard({
       <div className='mb-6'>
         <div className='flex items-baseline gap-2'>
           <span className='text-foreground text-4xl font-bold'>
-            ${formatPrice(plan.priceUSD || 0, 0)}
+            ${(plan.priceUSD ?? 0).toFixed(0)}
           </span>
           <span className='text-muted-foreground text-lg'>
             {isTeamPlan ? '/month for entire team' : '/month'}
@@ -1514,10 +1514,10 @@ function PricingCard({
         {plan.priceNative !== undefined && plan.nativeCurrencySymbol && (
           <p className='text-muted-foreground mt-1 text-sm'>
             ≈{' '}
-            {formatPriceWithCurrency(
-              plan.priceNative,
-              plan.nativeCurrencySymbol
-            )}
+            {formatCurrency(plan.priceNative, {
+              currency: plan.nativeCurrencySymbol,
+              decimals: 4
+            })}
           </p>
         )}
       </div>

@@ -2,12 +2,20 @@
 
 import { useState, useCallback } from 'react'
 
-import { decodeEventLog } from 'viem'
-
 import { useBlockchain } from '@/context'
 import { useToast } from '@/hooks/use-toast'
-import { getEscrowCoreAddress, ESCROW_CORE_ABI } from '@/lib/blockchain'
+import { getEscrowCoreAddress } from '@/lib/blockchain'
 import { calculateEscrowAmounts } from '@/lib/utils/token-helpers'
+import {
+  type CreateEscrowParams,
+  type FundEscrowParams,
+  type ConfirmDeliveryParams,
+  type CancelEscrowParams,
+  type RaiseDisputeParams,
+  type BatchCreateEscrowsParams,
+  type MarkDeliveredParams,
+  EscrowCoreService
+} from '@/services/blockchain/escrow-core.service'
 
 import { useTransaction } from './use-transaction'
 import type { TransactionConfig } from './use-transaction'
@@ -35,23 +43,6 @@ export interface EscrowDetails {
   metadata: string
 }
 
-export interface CreateEscrowParams {
-  seller: string
-  amount: string // Native currency amount as string
-  disputeWindow?: number // in seconds
-  metadata?: string
-  autoFund?: boolean // Whether to fund immediately
-  templateId?: string // Optional template ID
-  approvers?: string[] // Optional multi-sig approvers
-}
-
-export interface BatchCreateEscrowParams {
-  sellers: string[]
-  amounts: string[]
-  disputeWindows?: number[]
-  metadatas?: string[]
-}
-
 export function useEscrow() {
   const { chainId, address } = useBlockchain()
   const { executeTransaction, isExecuting } = useTransaction()
@@ -63,55 +54,10 @@ export function useEscrow() {
   const selectedChainId = chainId || 1
   const escrowAddress = getEscrowCoreAddress(selectedChainId)
 
-  // Helper function to get escrowId from transaction receipt
-  const getEscrowIdFromReceipt = async (
-    txHash: string,
-    chainId: number
-  ): Promise<number | null> => {
-    try {
-      // Import necessary functions dynamically
-      const { getPublicClient } = await import(
-        '@/lib/blockchain/blockchain-transaction'
-      )
-      const publicClient = getPublicClient(chainId)
-
-      if (!publicClient) {
-        console.error('No public client available for chain', chainId)
-        return null
-      }
-
-      // Get transaction receipt
-      const receipt = await publicClient.getTransactionReceipt({
-        hash: txHash as `0x${string}`
-      })
-
-      // Find the EscrowCreated event in the logs
-      for (const log of receipt.logs) {
-        try {
-          const decodedLog = decodeEventLog({
-            abi: ESCROW_CORE_ABI,
-            data: log.data,
-            topics: log.topics
-          })
-
-          if (decodedLog.eventName === 'EscrowCreated' && decodedLog.args) {
-            // The escrowId is the first indexed parameter
-            const args = decodedLog.args as unknown as { escrowId: bigint }
-            const escrowId = Number(args.escrowId)
-            return escrowId
-          }
-        } catch {
-          // Not the event we're looking for, continue
-          continue
-        }
-      }
-
-      return null
-    } catch (error) {
-      console.error('Error getting escrowId from receipt:', error)
-      return null
-    }
-  }
+  // Create service instance for parameter preparation
+  const escrowService = escrowAddress
+    ? new EscrowCoreService(selectedChainId)
+    : null
 
   const createEscrow = useCallback(
     async (params: CreateEscrowParams) => {
@@ -139,7 +85,17 @@ export function useEscrow() {
         const amountForContract = amounts.baseAmount.contractAmount
         const totalValue = amounts.totalAmount.transactionValue
 
-        const disputeWindow = params.disputeWindow || 7 * 24 * 60 * 60 // 7 days default
+        // Prepare parameters using centralized function
+        const escrowParams: CreateEscrowParams = {
+          seller: params.seller,
+          amount: amountForContract.toString(),
+          disputeWindow: params.disputeWindow,
+          metadata: params.metadata
+        }
+
+        const args = escrowService
+          ? escrowService.prepareEscrowParams('createEscrow', escrowParams)
+          : []
 
         let config: TransactionConfig
 
@@ -148,44 +104,30 @@ export function useEscrow() {
           params.templateId ||
           (params.approvers && params.approvers.length > 0)
         ) {
-          config = {
-            address: escrowAddress as `0x${string}`,
-            abi: ESCROW_CORE_ABI,
-            functionName: 'createEscrowWithTemplate',
-            args: [
-              params.seller,
-              amountForContract,
-              disputeWindow,
-              params.metadata || '',
-              params.templateId || '',
-              params.approvers || []
-            ],
-            value: params.autoFund ? totalValue : 0n,
-            chainId: selectedChainId
-          }
+          // For createEscrowWithTemplate, we need to add template and approvers
+          config = escrowService!.getTransactionConfig(
+            'createEscrowWithTemplate',
+            [...args, params.templateId || '', params.approvers || []],
+            params.autoFund ? totalValue : 0n
+          )
         } else {
           // Use basic function for backward compatibility
-          config = {
-            address: escrowAddress as `0x${string}`,
-            abi: ESCROW_CORE_ABI,
-            functionName: 'createEscrow',
-            args: [
-              params.seller,
-              amountForContract,
-              disputeWindow,
-              params.metadata || ''
-            ],
-            value: params.autoFund ? totalValue : 0n,
-            chainId: selectedChainId
-          }
+          config = escrowService!.getTransactionConfig(
+            'createEscrow',
+            args,
+            params.autoFund ? totalValue : 0n
+          )
         }
 
         const hash = await executeTransaction(config)
 
         // Extract escrowId from the transaction receipt
         let escrowId: number | null = null
-        if (hash) {
-          escrowId = await getEscrowIdFromReceipt(hash, selectedChainId)
+        if (hash && escrowService) {
+          escrowId = await escrowService.getEscrowIdFromReceipt(
+            hash,
+            selectedChainId
+          )
         }
 
         return { txHash: hash, escrowId }
@@ -222,14 +164,19 @@ export function useEscrow() {
         // Use transaction value for msg.value
         const totalValue = amounts.totalAmount.transactionValue
 
-        const config: TransactionConfig = {
-          address: escrowAddress as `0x${string}`,
-          abi: ESCROW_CORE_ABI,
-          functionName: 'fundEscrow',
-          args: [escrowId],
-          value: totalValue,
-          chainId: selectedChainId
+        const params: FundEscrowParams = {
+          escrowId
         }
+
+        const args = escrowService
+          ? escrowService.prepareEscrowParams('fundEscrow', params)
+          : []
+
+        const config = escrowService!.getTransactionConfig(
+          'fundEscrow',
+          args,
+          totalValue
+        )
 
         const hash = await executeTransaction(config, {
           messages: {
@@ -274,13 +221,18 @@ export function useEscrow() {
       }
 
       try {
-        const config: TransactionConfig = {
-          address: escrowAddress as `0x${string}`,
-          abi: ESCROW_CORE_ABI,
-          functionName: 'confirmDelivery',
-          args: [escrowId],
-          chainId: selectedChainId
+        const params: ConfirmDeliveryParams = {
+          escrowId
         }
+
+        const args = escrowService
+          ? escrowService.prepareEscrowParams('confirmDelivery', params)
+          : []
+
+        const config = escrowService!.getTransactionConfig(
+          'confirmDelivery',
+          args
+        )
 
         const hash = await executeTransaction(config)
 
@@ -305,13 +257,16 @@ export function useEscrow() {
       }
 
       try {
-        const config: TransactionConfig = {
-          address: escrowAddress as `0x${string}`,
-          abi: ESCROW_CORE_ABI,
-          functionName: 'raiseDispute',
-          args: [escrowId, reason],
-          chainId: selectedChainId
+        const params: RaiseDisputeParams = {
+          escrowId,
+          reason
         }
+
+        const args = escrowService
+          ? escrowService.prepareEscrowParams('raiseDispute', params)
+          : []
+
+        const config = escrowService!.getTransactionConfig('raiseDispute', args)
 
         const hash = await executeTransaction(config, {
           messages: {
@@ -356,13 +311,18 @@ export function useEscrow() {
       }
 
       try {
-        const config: TransactionConfig = {
-          address: escrowAddress as `0x${string}`,
-          abi: ESCROW_CORE_ABI,
-          functionName: 'markDelivered',
-          args: [escrowId],
-          chainId: selectedChainId
+        const params: MarkDeliveredParams = {
+          escrowId
         }
+
+        const args = escrowService
+          ? escrowService.prepareEscrowParams('markDelivered', params)
+          : []
+
+        const config = escrowService!.getTransactionConfig(
+          'markDelivered',
+          args
+        )
 
         const hash = await executeTransaction(config, {
           messages: {
@@ -408,13 +368,15 @@ export function useEscrow() {
       }
 
       try {
-        const config: TransactionConfig = {
-          address: escrowAddress as `0x${string}`,
-          abi: ESCROW_CORE_ABI,
-          functionName: 'cancelEscrow',
-          args: [escrowId],
-          chainId: selectedChainId
+        const params: CancelEscrowParams = {
+          escrowId
         }
+
+        const args = escrowService
+          ? escrowService.prepareEscrowParams('cancelEscrow', params)
+          : []
+
+        const config = escrowService!.getTransactionConfig('cancelEscrow', args)
 
         const hash = await executeTransaction(config, {
           messages: {
@@ -449,41 +411,22 @@ export function useEscrow() {
 
   const calculateFeePercentage = useCallback(
     async (userAddress?: string): Promise<number> => {
-      if (!userAddress || !escrowAddress) {
+      if (!userAddress || !escrowService) {
         throw new Error(
-          'Cannot calculate fee without user address and contract'
+          'Cannot calculate fee without user address and contract service'
         )
       }
 
-      const { getPublicClient } = await import(
-        '@/lib/blockchain/blockchain-transaction'
-      )
-      const publicClient = getPublicClient(selectedChainId)
-
-      if (!publicClient) {
-        throw new Error('Unable to connect to blockchain')
-      }
-
-      // Query the getUserFeePercentage function which fetches from SubscriptionManager
-      const feeBasisPoints = await publicClient.readContract({
-        address: escrowAddress as `0x${string}`,
-        abi: ESCROW_CORE_ABI,
-        functionName: 'getUserFeePercentage',
-        args: [userAddress]
-      })
-
-      // Convert basis points to percentage (e.g., 250 -> 0.025)
-      if (!feeBasisPoints && feeBasisPoints !== 0n) {
-        throw new Error('Unable to fetch fee tier from contract')
-      }
-
-      return Number(feeBasisPoints) / 10000
+      // Use the service method to get user fee percentage
+      const feePercentage =
+        await escrowService.getUserFeePercentage(userAddress)
+      return feePercentage / 100 // Convert from percentage to decimal (2.5 -> 0.025)
     },
-    [escrowAddress, selectedChainId]
+    [escrowService]
   )
 
   const batchCreateEscrows = useCallback(
-    async (params: BatchCreateEscrowParams) => {
+    async (params: BatchCreateEscrowsParams) => {
       if (!escrowAddress) {
         toast({
           title: 'Error',
@@ -513,19 +456,23 @@ export function useEscrow() {
           totalValue += amounts.totalAmount.transactionValue
         }
 
-        const config: TransactionConfig = {
-          address: escrowAddress as `0x${string}`,
-          abi: ESCROW_CORE_ABI,
-          functionName: 'batchCreateEscrows',
-          args: [
-            params.sellers,
-            amountsForContract,
-            params.disputeWindows || params.sellers.map(() => 7 * 24 * 60 * 60),
-            params.metadatas || params.sellers.map(() => '')
-          ],
-          value: totalValue,
-          chainId: selectedChainId
+        // Prepare batch params with amounts converted
+        const batchParams: BatchCreateEscrowsParams = {
+          sellers: params.sellers,
+          amounts: amountsForContract.map(a => a.toString()),
+          disputeWindows: params.disputeWindows,
+          metadatas: params.metadatas
         }
+
+        const args = escrowService
+          ? escrowService.prepareEscrowParams('batchCreateEscrows', batchParams)
+          : []
+
+        const config = escrowService!.getTransactionConfig(
+          'batchCreateEscrows',
+          args,
+          totalValue
+        )
 
         const hash = await executeTransaction(config, {
           messages: {
@@ -576,13 +523,9 @@ export function useEscrow() {
       }
 
       try {
-        const config: TransactionConfig = {
-          address: escrowAddress as `0x${string}`,
-          abi: ESCROW_CORE_ABI,
-          functionName: 'approveEscrow',
-          args: [escrowId],
-          chainId: selectedChainId
-        }
+        const config = escrowService!.getTransactionConfig('approveEscrow', [
+          BigInt(escrowId)
+        ])
 
         const hash = await executeTransaction(config, {
           messages: {

@@ -28,7 +28,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib'
 import type { BattleWithDetails } from '@/lib/db/queries/battles'
-import { formatRelativeTime, formatFullDateTime } from '@/lib/utils/string'
+import { formatDate } from '@/lib/utils/string'
 
 interface BattleDetailsModalProps {
   battle: BattleWithDetails | null
@@ -74,8 +74,8 @@ export function BattleDetailsModal({
             Battle Details
           </DialogTitle>
           <DialogDescription>
-            {formatRelativeTime(battle.createdAt)} •{' '}
-            {formatFullDateTime(battle.createdAt)}
+            {formatDate(battle.createdAt, 'relative')} •{' '}
+            {formatDate(battle.createdAt, 'full')}
           </DialogDescription>
         </DialogHeader>
 

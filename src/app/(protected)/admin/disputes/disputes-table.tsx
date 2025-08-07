@@ -118,7 +118,7 @@ export function DisputesTable({
     if (imageArray.length > 0) {
       setLightboxImages(
         imageArray.map(src => ({
-          src: src.startsWith('/') ? `/api/uploads/${src}` : src
+          src: src.startsWith('/') ? apiEndpoints.uploads.getFile(src) : src
         }))
       )
       setLightboxOpen(true)
@@ -191,7 +191,7 @@ export function DisputesTable({
     ),
     amount: (trade: DisputedTradeWithUsers) => (
       <div className='font-medium'>
-        {formatCurrency(trade.amount, trade.currency)}
+        {formatCurrency(trade.amount, { currency: trade.currency })}
       </div>
     ),
     reason: (trade: DisputedTradeWithUsers) => {
@@ -263,10 +263,9 @@ export function DisputesTable({
                 <div className='flex justify-between'>
                   <span className='text-muted-foreground text-sm'>Amount</span>
                   <span className='font-medium'>
-                    {formatCurrency(
-                      resolveDialog.data.amount,
-                      resolveDialog.data.currency
-                    )}
+                    {formatCurrency(resolveDialog.data.amount, {
+                      currency: resolveDialog.data.currency
+                    })}
                   </span>
                 </div>
                 <div className='flex justify-between'>
@@ -383,7 +382,7 @@ export function DisputesTable({
                                 (100 - splitPercentage)) /
                               100
                             ).toFixed(2),
-                            resolveDialog.data.currency
+                            { currency: resolveDialog.data.currency }
                           )}
                         </span>
                         <span>
@@ -394,7 +393,7 @@ export function DisputesTable({
                                 splitPercentage) /
                               100
                             ).toFixed(2),
-                            resolveDialog.data.currency
+                            { currency: resolveDialog.data.currency }
                           )}
                         </span>
                       </div>
@@ -467,10 +466,9 @@ export function DisputesTable({
                       Amount
                     </span>
                     <p className='font-medium'>
-                      {formatCurrency(
-                        viewDetailsDialog.data.amount,
-                        viewDetailsDialog.data.currency
-                      )}
+                      {formatCurrency(viewDetailsDialog.data.amount, {
+                        currency: viewDetailsDialog.data.currency
+                      })}
                     </p>
                   </div>
                   <div>

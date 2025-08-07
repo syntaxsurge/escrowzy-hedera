@@ -8,7 +8,6 @@ import { eq, and, ne, count, inArray } from 'drizzle-orm'
 
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
-import { truncateAddress } from '@/lib'
 import {
   validatedActionWithUser,
   generateEmailVerificationToken,
@@ -42,6 +41,7 @@ import {
   leaveTeamSchema
 } from '@/lib/schemas/team'
 import { getIpAddress } from '@/lib/utils/ip'
+import { truncateAddress } from '@/lib/utils/string'
 import { getTeamForUser } from '@/services/user'
 
 async function logActivity(

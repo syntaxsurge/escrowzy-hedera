@@ -139,7 +139,9 @@ export const apiEndpoints = {
     confirm: (id: string | number) => `/api/trades/${id}/confirm`,
     dispute: (id: string | number) => `/api/trades/${id}/dispute`,
     cancel: (id: string | number) => `/api/trades/${id}/cancel`,
-    convertPrice: '/api/trades/convert-price'
+    convertPrice: '/api/trades/convert-price',
+    calculateFee: '/api/trades/calculate-fee',
+    validateFee: '/api/trades/validate-fee'
   },
   listings: {
     base: '/api/listings',

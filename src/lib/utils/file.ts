@@ -1,3 +1,5 @@
+import { apiEndpoints } from '@/config/api-endpoints'
+
 export const IMAGE_MIME_TYPES = [
   'image/jpeg',
   'image/jpg',
@@ -17,10 +19,16 @@ export const IMAGE_MIME_TYPES = [
 export function isImageFile(mimeType: string | undefined | null): boolean {
   if (!mimeType) return false
   return IMAGE_MIME_TYPES.includes(mimeType.toLowerCase())
-}
+} /**
+ * Get the URL for an uploaded file
+ * This function can be used on both client and server
+ */
 
-export function getFileExtension(filename: string): string {
-  const lastDot = filename.lastIndexOf('.')
-  if (lastDot === -1) return ''
-  return filename.substring(lastDot + 1).toLowerCase()
+export function getUploadUrl(relativePath: string): string {
+  // If it's already a full URL (from Vercel Blob), return as-is
+  if (relativePath.startsWith('http')) {
+    return relativePath
+  }
+  // For local uploads, prepend the uploads endpoint
+  return apiEndpoints.uploads.getFile(relativePath)
 }

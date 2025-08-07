@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getSession } from '@/lib/auth/session'
-import { FeeValidationService } from '@/services/blockchain/fee-validation'
+import { EscrowCoreService } from '@/services/blockchain/escrow-core.service'
 
 export async function POST(request: Request) {
   try {
@@ -35,19 +35,25 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create fee validation service for the specified chain
-    const feeService = new FeeValidationService(chainId)
+    // Create escrow service for the specified chain
+    const escrowService = new EscrowCoreService(chainId)
+    if (!escrowService.contractAddress) {
+      return NextResponse.json(
+        { success: false, error: 'Service not available for this chain' },
+        { status: 400 }
+      )
+    }
 
-    // Validate the client-provided fee
-    const isValid = await feeService.validateClientFee(
+    // Validate the client-provided fee using the service method
+    const isValid = await escrowService.validateClientFee(
       address,
       amount,
       clientFee
     )
 
     if (!isValid) {
-      // If validation fails, calculate the correct fee
-      const correctFee = await feeService.calculateUserFee(address, amount)
+      // If validation fails, calculate the correct fee using the service
+      const correctFee = await escrowService.calculateUserFee(address, amount)
 
       return NextResponse.json({
         success: false,

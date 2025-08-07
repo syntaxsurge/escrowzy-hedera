@@ -14,7 +14,7 @@ import {
   CardTitle
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { useOKXQueue, formatWaitTime } from '@/hooks/use-okx-queue'
+import { useOKXQueue, formatWaitTime } from '@/hooks/okx/use-okx-queue'
 import { cn } from '@/lib'
 
 interface OKXQueueStatusProps {

@@ -1,22 +1,24 @@
 import { getNativeCurrencySymbol } from '@/lib/blockchain'
+import { withSubscriptionValidation } from '@/lib/blockchain/contract-validation'
 import { formatNativeAmount } from '@/lib/utils/token-helpers'
-import { withContractValidation } from '@/services/blockchain/contract-validation'
 
 // GET /api/admin/contract-earnings - Get earnings summary from smart contract
-export const GET = withContractValidation(
-  async ({ contractService, chainId }) => {
+export const GET = withSubscriptionValidation(
+  async ({ subscriptionService, chainId }) => {
     const nativeCurrency = getNativeCurrencySymbol(chainId)
 
     const [earningsSummary, contractInfo] = await Promise.all([
-      contractService.getEarningsSummary(),
-      contractService.getContractInfo()
+      subscriptionService.getEarningsSummary(),
+      subscriptionService.getContractInfo()
     ])
 
     // Convert Wei amounts to USD and ETH for display
     const [totalUSD, withdrawnUSD, availableUSD] = await Promise.all([
-      contractService.convertWeiToUSD(earningsSummary.totalNativeEarnings),
-      contractService.convertWeiToUSD(earningsSummary.totalNativeWithdrawn),
-      contractService.convertWeiToUSD(earningsSummary.availableNativeEarnings)
+      subscriptionService.convertWeiToUSD(earningsSummary.totalNativeEarnings),
+      subscriptionService.convertWeiToUSD(earningsSummary.totalNativeWithdrawn),
+      subscriptionService.convertWeiToUSD(
+        earningsSummary.availableNativeEarnings
+      )
     ])
 
     const formattedEarnings = {

@@ -203,7 +203,7 @@ export default function TradingHubDashboard() {
     },
     {
       title: 'Total Volume',
-      value: formatCurrency(userStats?.totalVolume ?? '0', currency),
+      value: formatCurrency(userStats?.totalVolume ?? '0', { currency }),
       subtitle: 'Lifetime trading',
       icon: <Coins className='h-5 w-5 text-white' />,
       badge: 'LIFETIME',

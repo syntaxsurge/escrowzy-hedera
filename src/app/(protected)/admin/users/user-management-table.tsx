@@ -34,9 +34,12 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { apiEndpoints } from '@/config/api-endpoints'
+import {
+  useTableSelection,
+  emitRowDeletion
+} from '@/hooks/table/use-table-selection'
 import { useDialogState } from '@/hooks/use-dialog-state'
 import { useLoading } from '@/hooks/use-loading'
-import { useTableSelection, emitRowDeletion } from '@/hooks/use-table-selection'
 import { api } from '@/lib/api/http-client'
 import type { UserWithPlan } from '@/lib/db/queries/admin-users'
 import {

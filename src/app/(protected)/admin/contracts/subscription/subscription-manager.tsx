@@ -51,7 +51,11 @@ import {
   getExplorerUrl,
   isSupportedChainId
 } from '@/lib/blockchain'
-import { formatPriceWithCurrency } from '@/lib/blockchain/payment'
+import type {
+  CreatePlanParams,
+  UpdatePlanParams
+} from '@/services/blockchain/subscription-manager.service'
+import { formatCurrency } from '@/lib/utils/string'
 import { formatTeamMemberLimit } from '@/lib/utils/subscription'
 
 interface ContractPlan {
@@ -255,36 +259,42 @@ export function SubscriptionManager() {
       return
     }
 
-    await executeTransaction(
-      'createPlan',
-      {
-        planKey: nextPlanKey,
-        name: createPlanForm.name,
-        displayName: createPlanForm.displayName,
-        description: createPlanForm.description,
-        priceUSD: parseFloat(createPlanForm.priceUSD),
-        maxMembers:
-          createPlanForm.maxMembers === '-1'
-            ? -1
-            : parseInt(createPlanForm.maxMembers),
-        features: createPlanForm.features.filter(f => f.trim() !== ''),
-        isActive: createPlanForm.isActive,
-        sortOrder: parseInt(createPlanForm.sortOrder),
-        isTeamPlan: createPlanForm.isTeamPlan,
+    const createParams: CreatePlanParams = {
+      planKey: nextPlanKey,
+      name: createPlanForm.name,
+      displayName: createPlanForm.displayName,
+      description: createPlanForm.description,
+      priceUSD: parseFloat(createPlanForm.priceUSD),
+      maxMembers:
+        createPlanForm.maxMembers === '-1'
+          ? -1
+          : parseInt(createPlanForm.maxMembers),
+      features: createPlanForm.features.filter(f => f.trim() !== ''),
+      // Only include optional fields if they differ from defaults
+      ...(createPlanForm.isActive !== true && {
+        isActive: createPlanForm.isActive
+      }),
+      ...(parseInt(createPlanForm.sortOrder) !== 0 && {
+        sortOrder: parseInt(createPlanForm.sortOrder)
+      }),
+      ...(createPlanForm.isTeamPlan && {
+        isTeamPlan: createPlanForm.isTeamPlan
+      }),
+      ...(parseFloat(createPlanForm.feeTierPercentage) > 0 && {
         feeTierBasisPoints: Math.round(
           parseFloat(createPlanForm.feeTierPercentage) * 100
-        ) // Convert percentage to basis points
-      },
-      effectiveChainId,
-      {
-        onSuccess: async () => {
-          createPlanDialog.close()
-          resetCreatePlanForm()
-          // Reload plans with loading state
-          await reloadPlansWithDelay()
-        }
+        )
+      })
+    }
+
+    await executeTransaction('createPlan', createParams, effectiveChainId, {
+      onSuccess: async () => {
+        createPlanDialog.close()
+        resetCreatePlanForm()
+        // Reload plans with loading state
+        await reloadPlansWithDelay()
       }
-    )
+    })
   }
 
   const handleUpdatePlan = async () => {
@@ -298,36 +308,40 @@ export function SubscriptionManager() {
 
     if (!editPlanForm) return
 
-    await executeTransaction(
-      'updatePlan',
-      {
-        planKey: editPlanForm.planKey,
-        name: editPlanForm.name,
-        displayName: editPlanForm.displayName,
-        description: editPlanForm.description,
-        priceUSD: parseFloat(editPlanForm.priceUSD),
-        maxMembers:
-          editPlanForm.maxMembers === '-1'
-            ? -1
-            : parseInt(editPlanForm.maxMembers),
-        features: editPlanForm.features.filter(f => f.trim() !== ''),
-        isActive: editPlanForm.isActive,
-        sortOrder: parseInt(editPlanForm.sortOrder),
-        isTeamPlan: editPlanForm.isTeamPlan,
+    const updateParams: UpdatePlanParams = {
+      planKey: editPlanForm.planKey,
+      name: editPlanForm.name,
+      displayName: editPlanForm.displayName,
+      description: editPlanForm.description,
+      priceUSD: parseFloat(editPlanForm.priceUSD),
+      maxMembers:
+        editPlanForm.maxMembers === '-1'
+          ? -1
+          : parseInt(editPlanForm.maxMembers),
+      features: editPlanForm.features.filter(f => f.trim() !== ''),
+      // Only include optional fields if they differ from defaults
+      ...(editPlanForm.isActive !== true && {
+        isActive: editPlanForm.isActive
+      }),
+      ...(parseInt(editPlanForm.sortOrder) !== 0 && {
+        sortOrder: parseInt(editPlanForm.sortOrder)
+      }),
+      ...(editPlanForm.isTeamPlan && { isTeamPlan: editPlanForm.isTeamPlan }),
+      ...(parseFloat(editPlanForm.feeTierPercentage) > 0 && {
         feeTierBasisPoints: Math.round(
           parseFloat(editPlanForm.feeTierPercentage) * 100
-        ) // Convert percentage to basis points
-      },
-      effectiveChainId,
-      {
-        onSuccess: async () => {
-          setEditingPlan(null)
-          setEditPlanForm(null)
-          // Reload plans with loading state
-          await reloadPlansWithDelay()
-        }
+        )
+      })
+    }
+
+    await executeTransaction('updatePlan', updateParams, effectiveChainId, {
+      onSuccess: async () => {
+        setEditingPlan(null)
+        setEditPlanForm(null)
+        // Reload plans with loading state
+        await reloadPlansWithDelay()
       }
-    )
+    })
   }
 
   const handleDeletePlan = async (planKey: number) => {
@@ -1148,10 +1162,10 @@ export function SubscriptionManager() {
                               plan.nativeCurrencySymbol && (
                                 <p className='text-muted-foreground mt-1 text-sm'>
                                   ≈{' '}
-                                  {formatPriceWithCurrency(
-                                    plan.priceNative,
-                                    plan.nativeCurrencySymbol
-                                  )}
+                                  {formatCurrency(plan.priceNative, {
+                                    currency: plan.nativeCurrencySymbol,
+                                    decimals: 4
+                                  })}
                                 </p>
                               )}
                           </div>

@@ -5,7 +5,7 @@ import { ethers } from 'ethers'
 import { apiResponses } from '@/lib/api/server-utils'
 import { getSession } from '@/lib/auth/session'
 import { isSupportedChainId } from '@/lib/blockchain'
-import { createContractPlanService } from '@/services/blockchain/contract-plan'
+import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 
 // GET /api/admin/contract-plans/[planKey] - Get plan by key from smart contract
 export async function GET(
@@ -36,9 +36,9 @@ export async function GET(
       )
     }
 
-    const contractService = createContractPlanService(chainId)
+    const contractService = new SubscriptionManagerService(chainId)
 
-    if (!contractService) {
+    if (!contractService.contractAddress) {
       return apiResponses.error(
         `Contract not configured for chain ${chainId}. Please check your environment configuration.`,
         400

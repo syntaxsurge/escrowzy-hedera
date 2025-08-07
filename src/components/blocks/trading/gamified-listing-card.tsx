@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { useSession } from '@/hooks/use-session'
 import { cn } from '@/lib'
-import { formatRelativeTime } from '@/lib/utils/string'
+import { formatDate } from '@/lib/utils/string'
 import { getUserDisplayName } from '@/lib/utils/user'
 import type { EscrowListingWithUser, DomainMetadata } from '@/types/listings'
 import type { TradeWithUsers } from '@/types/trade'
@@ -258,7 +258,7 @@ export function GamifiedListingCard({
                 ID #{listing.id}
               </Badge>
               <p className='text-muted-foreground text-xs font-medium'>
-                {formatRelativeTime(listing.createdAt)}
+                {formatDate(listing.createdAt, 'relative')}
               </p>
             </div>
           </div>

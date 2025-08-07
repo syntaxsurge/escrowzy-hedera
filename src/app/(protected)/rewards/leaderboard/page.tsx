@@ -18,7 +18,7 @@ import { PageHeader } from '@/components/blocks/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useRewards } from '@/hooks/use-rewards'
+import { useRewards } from '@/hooks/gaming/use-rewards'
 import { useSession } from '@/hooks/use-session'
 import { cn } from '@/lib'
 

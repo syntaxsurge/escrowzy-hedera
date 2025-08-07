@@ -1,6 +1,6 @@
 import { ChevronDown, Wallet } from 'lucide-react'
 
-import { truncateAddress } from '@/lib'
+import { truncateAddress } from '@/lib/utils/string'
 
 // Centralized disconnect button UI
 export function DisconnectButton({

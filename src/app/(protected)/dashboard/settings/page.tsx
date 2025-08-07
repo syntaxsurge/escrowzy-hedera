@@ -185,7 +185,7 @@ function AccountInformation() {
       formData.append('uploadType', 'AVATARS')
       formData.append('context', `user-${user?.id}`)
 
-      const response = await fetch('/api/upload', {
+      const response = await fetch(apiEndpoints.uploads.base, {
         method: 'POST',
         body: formData,
         credentials: 'include'
@@ -209,10 +209,13 @@ function AccountInformation() {
   const handleAvatarDelete = async () => {
     setIsDeletingAvatar(true)
     try {
-      const response = await fetch('/api/upload?type=AVATARS', {
-        method: 'DELETE',
-        credentials: 'include'
-      })
+      const response = await fetch(
+        `${apiEndpoints.uploads.base}?type=AVATARS`,
+        {
+          method: 'DELETE',
+          credentials: 'include'
+        }
+      )
 
       if (response.ok) {
         showSuccessToast('Avatar removed successfully!')

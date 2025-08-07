@@ -7,7 +7,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { DataTable } from '@/components/blocks/table/data-table'
 import { DataTablePagination } from '@/components/blocks/table/data-table-pagination'
 import { renderTableColumns } from '@/components/blocks/table/table-columns-renderer'
-import { useServerTable } from '@/hooks/use-server-table'
+import { useServerTable } from '@/hooks/table/use-server-table'
 import type { ColumnConfig } from '@/lib/table/table-columns-config'
 
 interface ServerSideTableProps<TData extends Record<string, any>> {

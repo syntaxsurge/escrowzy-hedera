@@ -1,32 +1,11 @@
-import { apiResponses } from '@/lib/api/server-utils'
-import { isSupportedChainId, getSupportedChainIds } from '@/lib/blockchain'
-import { createContractPlanService } from '@/services/blockchain/contract-plan'
+import { withSubscriptionValidation } from '@/lib/blockchain/contract-validation'
 
 // GET /api/contract-plans - Get active plans from smart contract for public use
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const chainId = Number(searchParams.get('chainId'))
-
-    if (!chainId || !isSupportedChainId(chainId)) {
-      return apiResponses.error(
-        `Unsupported or invalid chain ID: ${chainId}. Please connect to a supported network.`,
-        400
-      )
-    }
-
-    const contractService = createContractPlanService(chainId)
-
-    if (!contractService) {
-      return apiResponses.error(
-        `Contract not configured for chain ${chainId}. Please check your environment configuration.`,
-        400
-      )
-    }
-
+export const GET = withSubscriptionValidation(
+  async ({ subscriptionService }) => {
     const [activePlans, contractInfo] = await Promise.all([
-      contractService.getActivePlans(),
-      contractService.getContractInfo()
+      subscriptionService.getActivePlans(),
+      subscriptionService.getContractInfo()
     ])
 
     // Convert contract plans to the format expected by the frontend
@@ -36,7 +15,7 @@ export async function GET(request: Request) {
         .map(async plan => {
           let priceUSD: number
           try {
-            priceUSD = await contractService.convertWeiToUSD(plan.priceWei)
+            priceUSD = await subscriptionService.convertWeiToUSD(plan.priceWei)
           } catch (error) {
             // If price conversion fails, return null to indicate pricing unavailable
             throw new Error(
@@ -78,29 +57,12 @@ export async function GET(request: Request) {
         })
     )
 
-    return apiResponses.success({
+    return {
       plans: formattedPlans,
       contractInfo,
       source: 'smart-contract',
       nativeCurrency: contractInfo.nativeCurrency
-    })
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error'
-
-    // Check if it's a configuration error
-    if (errorMessage.includes('Contract address not configured')) {
-      // For configuration errors, return a special response that the frontend can handle
-      return apiResponses.success({
-        error: errorMessage,
-        type: 'configuration_error',
-        chainId: Number(new URL(request.url).searchParams.get('chainId')),
-        supportedChains: getSupportedChainIds(),
-        plans: [] // Return empty plans array for configuration errors
-      })
     }
-
-    // For other errors, return error status
-    return apiResponses.handleError(error, 'Failed to fetch contract plans')
-  }
-}
+  },
+  false // Don't require authentication for public endpoint
+)

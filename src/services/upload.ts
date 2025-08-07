@@ -8,7 +8,7 @@ import { put } from '@vercel/blob'
 import { fileTypeFromBuffer } from 'file-type'
 
 import { uploadConstants } from '@/config/business-constants'
-import { getUploadUrl } from '@/lib/utils/upload'
+import { getUploadUrl } from '@/lib/utils/file'
 
 // ============================================
 // Types and Interfaces

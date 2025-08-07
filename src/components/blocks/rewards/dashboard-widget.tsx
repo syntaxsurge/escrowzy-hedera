@@ -9,7 +9,7 @@ import { Trophy, Zap, Flame, Target } from 'lucide-react'
 import { XPBar, LevelBadge } from '@/components/blocks/rewards'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { appRoutes } from '@/config/app-routes'
-import { useRewards } from '@/hooks/use-rewards'
+import { useRewards } from '@/hooks/gaming/use-rewards'
 import { cn } from '@/lib'
 
 interface RewardsWidgetProps {

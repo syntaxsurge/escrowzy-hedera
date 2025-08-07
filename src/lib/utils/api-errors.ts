@@ -1,8 +1,4 @@
 /**
- * Market-related utility functions
- */
-
-/**
  * Get human-readable error message for OKX DEX errors
  */
 export function getOKXErrorMessage(
@@ -28,15 +24,4 @@ export function getOKXErrorMessage(
     default:
       return 'Not available'
   }
-}
-
-/**
- * Format price display with proper decimal places
- */
-export function formatPrice(
-  price: number | null | undefined,
-  decimals = 2
-): string {
-  if (price === null || price === undefined) return '-'
-  return `$${price.toFixed(decimals)}`
 }

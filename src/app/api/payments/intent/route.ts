@@ -4,7 +4,7 @@ import { apiResponses } from '@/lib/api/server-utils'
 import { requireAuth } from '@/lib/auth/auth-utils'
 import { requireTeamMember } from '@/lib/auth/team-auth'
 import { createIntentSchema } from '@/lib/schemas/payment'
-import { createContractPlanService } from '@/services/blockchain/contract-plan'
+import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 import { createPaymentIntent } from '@/services/payment'
 
 export async function POST(request: NextRequest) {
@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch plan details from smart contract
-    const contractService = createContractPlanService(networkId)
-    if (!contractService) {
+    const contractService = new SubscriptionManagerService(networkId)
+    if (!contractService.contractAddress) {
       return apiResponses.error(
         'Smart contract not configured for this network',
         400

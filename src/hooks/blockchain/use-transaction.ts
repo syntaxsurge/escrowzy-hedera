@@ -30,14 +30,14 @@ import { api } from '@/lib/api/http-client'
 import {
   DEFAULT_CHAIN_ID,
   getChainConfig,
-  isSupportedChainId,
-  SUBSCRIPTION_MANAGER_ABI
+  isSupportedChainId
 } from '@/lib/blockchain'
 import {
   waitForTransactionConfirmation,
   getBlockExplorerUrl
 } from '@/lib/blockchain/blockchain-transaction'
 import { thirdwebClient } from '@/lib/blockchain/thirdweb-client'
+import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 import { type TransactionStatus } from '@/types/transaction'
 
 // ============================================================================
@@ -699,23 +699,24 @@ export function useAdminTransaction() {
       const contractArgs = prepareContractArgsFromResponse(
         method,
         args,
-        response.data
+        response.data,
+        effectiveChainId
       )
 
-      const txHash = await executeTransaction(
-        {
-          address: transactionData.to as `0x${string}`,
-          abi: SUBSCRIPTION_MANAGER_ABI,
-          functionName: method,
-          args: contractArgs,
-          value: BigInt(transactionData.value || 0),
-          chainId: effectiveChainId
-        },
-        {
-          ...options,
-          messages
-        }
+      // Use the SubscriptionManagerService's transaction config
+      const subscriptionService = new SubscriptionManagerService(
+        effectiveChainId
       )
+      const config = subscriptionService.getTransactionConfig(
+        method,
+        contractArgs,
+        BigInt(transactionData.value || 0)
+      )
+
+      const txHash = await executeTransaction(config, {
+        ...options,
+        messages
+      })
 
       return { txHash, success: true }
     } catch (error) {
@@ -727,48 +728,18 @@ export function useAdminTransaction() {
   const prepareContractArgsFromResponse = (
     method: string,
     args: any,
-    responseData: any
+    responseData: any,
+    chainId: number
   ): any[] => {
-    switch (method) {
-      case 'createPlan':
-        return [
-          responseData.planKey,
-          args.name,
-          args.displayName,
-          args.description,
-          BigInt(responseData.priceWei),
-          args.maxMembers === -1
-            ? BigInt(2) ** BigInt(256) - BigInt(1)
-            : BigInt(args.maxMembers),
-          args.features,
-          args.isActive,
-          args.sortOrder,
-          args.isTeamPlan
-        ]
-      case 'updatePlan':
-        return [
-          args.planKey,
-          args.name,
-          args.displayName,
-          args.description,
-          BigInt(responseData.priceWei),
-          args.maxMembers === -1
-            ? BigInt(2) ** BigInt(256) - BigInt(1)
-            : BigInt(args.maxMembers),
-          args.features,
-          args.isActive,
-          args.sortOrder,
-          args.isTeamPlan
-        ]
-      case 'deletePlan':
-        return [args.planKey]
-      case 'withdrawEarnings':
-        return [args.to as `0x${string}`, BigInt(responseData.amountWei)]
-      case 'setPlanPrice':
-        return [args.planKey, BigInt(responseData.priceWei)]
-      default:
-        return []
-    }
+    // Use centralized parameter preparation for subscription manager
+    const subscriptionService = new SubscriptionManagerService(chainId)
+    return subscriptionService.contractAddress
+      ? subscriptionService.prepareSubscriptionParams(
+          method,
+          args,
+          responseData
+        )
+      : []
   }
 
   return {

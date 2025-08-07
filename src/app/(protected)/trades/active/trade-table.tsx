@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/table'
 import { appRoutes } from '@/config/app-routes'
 import { useSession } from '@/hooks/use-session'
-import { formatCurrency, formatRelativeTime } from '@/lib/utils/string'
+import { formatCurrency, formatDate } from '@/lib/utils/string'
 import { getUserDisplayName } from '@/lib/utils/user'
 import type { TradeWithUsers } from '@/types/trade'
 import { TRADE_STATUS } from '@/types/trade'
@@ -112,7 +112,7 @@ export function TradeTable({ trades, onUpdate }: TradeTableProps) {
                 </TableCell>
                 <TableCell>{getUserDisplayName(otherParty)}</TableCell>
                 <TableCell>
-                  {formatCurrency(trade.amount, trade.currency)}
+                  {formatCurrency(trade.amount, { currency: trade.currency })}
                 </TableCell>
                 <TableCell>{trade.listingCategory}</TableCell>
                 <TableCell>
@@ -120,7 +120,7 @@ export function TradeTable({ trades, onUpdate }: TradeTableProps) {
                     {TRADE_STATUS[trade.status]}
                   </Badge>
                 </TableCell>
-                <TableCell>{formatRelativeTime(trade.createdAt)}</TableCell>
+                <TableCell>{formatDate(trade.createdAt, 'relative')}</TableCell>
                 <TableCell className='text-right'>
                   <div className='flex justify-end gap-2'>
                     <Button

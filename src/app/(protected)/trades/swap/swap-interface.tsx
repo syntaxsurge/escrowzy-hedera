@@ -34,9 +34,9 @@ import {
   useUnifiedBalance,
   useUnifiedWalletClient
 } from '@/context/blockchain'
+import { useSwap } from '@/hooks/okx/use-swap'
+import { useTokenBalances } from '@/hooks/okx/use-token-balances'
 import { useDebounce } from '@/hooks/use-debounce'
-import { useSwap } from '@/hooks/use-swap'
-import { useTokenBalances } from '@/hooks/use-token-balances'
 import { cn } from '@/lib'
 import { getNativeCurrencySymbol, getChainConfig } from '@/lib/blockchain'
 import type { OKXTokenInfo } from '@/types/okx-dex'

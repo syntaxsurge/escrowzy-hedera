@@ -31,10 +31,10 @@ import {
   BATTLE_ICONS,
   BATTLE_STYLES
 } from '@/config/battle.config'
-import { useBattleInvitations } from '@/hooks/use-battle-invitations'
-import { useBattleRealtime } from '@/hooks/use-battle-realtime'
-import { useBattles } from '@/hooks/use-battles'
-import { useRewards } from '@/hooks/use-rewards'
+import { useBattleInvitations } from '@/hooks/gaming/use-battle-invitations'
+import { useBattles } from '@/hooks/gaming/use-battles'
+import { useRewards } from '@/hooks/gaming/use-rewards'
+import { useBattleRealtime } from '@/hooks/notification/use-battle-realtime'
 import { useSession } from '@/hooks/use-session'
 import { cn } from '@/lib'
 import { api } from '@/lib/api/http-client'

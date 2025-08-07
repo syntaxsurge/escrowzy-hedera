@@ -3,6 +3,7 @@
  * This file contains client-side upload utilities that can be used in React components
  */
 
+import { apiEndpoints } from '@/config/api-endpoints'
 import { uploadConstants } from '@/config/business-constants'
 
 export interface ClientUploadOptions {
@@ -123,7 +124,7 @@ export class UploadClient {
       }
 
       // Use fetch for simple upload
-      const response = await fetch('/api/upload', {
+      const response = await fetch(apiEndpoints.uploads.base, {
         method: 'POST',
         body: formData,
         credentials: 'include'
@@ -213,7 +214,7 @@ export class UploadClient {
       })
 
       // Send request
-      xhr.open('POST', '/api/upload')
+      xhr.open('POST', apiEndpoints.uploads.base)
       xhr.withCredentials = true
       xhr.send(formData)
     })

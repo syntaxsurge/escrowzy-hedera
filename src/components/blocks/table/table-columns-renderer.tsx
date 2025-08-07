@@ -17,12 +17,12 @@ import { UserCell } from '@/components/blocks/table/user-cell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { truncateAddress } from '@/lib'
 import { buildTxUrl, getChainNickname } from '@/lib/blockchain'
 import {
-  formatPaymentAmountWithCurrency,
+  truncateAddress,
+  formatCurrency,
   formatPlanName
-} from '@/lib/blockchain/payment'
+} from '@/lib/utils/string'
 
 import type { ColumnConfig } from '../../../lib/table/table-columns-config'
 
@@ -264,7 +264,12 @@ export function renderTableColumns<T extends Record<string, any>>(
 
             return (
               <span className='font-mono'>
-                {formatPaymentAmountWithCurrency(amount, chainId, currency)}
+                {formatCurrency(amount, {
+                  currency,
+                  chainId,
+                  isSmallestUnit: true,
+                  decimals: 4
+                })}
               </span>
             )
           }

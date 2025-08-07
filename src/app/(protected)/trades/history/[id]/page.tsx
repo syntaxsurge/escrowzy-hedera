@@ -41,12 +41,12 @@ import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { refreshIntervals, appRoutes } from '@/config/app-routes'
+import { useTradeRealtime } from '@/hooks/notification/use-trade-realtime'
 import { useSession } from '@/hooks/use-session'
-import { useTradeRealtime } from '@/hooks/use-trade-realtime'
 import { cn } from '@/lib'
 import { api } from '@/lib/api/http-client'
 import { getChainConfig, buildTxUrl } from '@/lib/blockchain'
-import { formatCurrency, formatRelativeTime } from '@/lib/utils/string'
+import { formatCurrency, formatDate } from '@/lib/utils/string'
 import { getUserDisplayName } from '@/lib/utils/user'
 import type { TradeWithUsers, TradeMetadata } from '@/types/trade'
 
@@ -731,7 +731,7 @@ export default function TradeDetailPage() {
                     {new Date(trade.createdAt).toLocaleString()}
                   </p>
                   <p className='text-muted-foreground text-xs'>
-                    {formatRelativeTime(trade.createdAt)}
+                    {formatDate(trade.createdAt, 'relative')}
                   </p>
                 </div>
 
@@ -744,7 +744,7 @@ export default function TradeDetailPage() {
                       {new Date(trade.completedAt).toLocaleString()}
                     </p>
                     <p className='text-muted-foreground text-xs'>
-                      {formatRelativeTime(trade.completedAt)}
+                      {formatDate(trade.completedAt, 'relative')}
                     </p>
                   </div>
                 )}

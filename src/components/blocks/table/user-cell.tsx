@@ -2,7 +2,7 @@ import React from 'react'
 
 import { User, Mail, Wallet } from 'lucide-react'
 
-import { truncateAddress } from '@/lib'
+import { truncateAddress } from '@/lib/utils/string'
 
 interface UserCellProps {
   name?: string | null

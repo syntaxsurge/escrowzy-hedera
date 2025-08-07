@@ -3,7 +3,8 @@
 import { Activity } from 'lucide-react'
 
 import { cn } from '@/lib'
-import { getOKXErrorMessage, formatPrice } from '@/lib/utils/market'
+import { getOKXErrorMessage } from '@/lib/utils/api-errors'
+import { formatCurrency } from '@/lib/utils/string'
 
 interface PriceDisplayProps {
   title: string
@@ -77,7 +78,7 @@ export function PriceDisplay({
         {loading ? (
           <span className='text-muted-foreground'>Loading...</span>
         ) : price !== null ? (
-          formatPrice(price)
+          formatCurrency(price, { currency: 'USD', decimals: 2 })
         ) : (
           <span className={cn('text-muted-foreground', styles.error)}>
             {getOKXErrorMessage(error)}
@@ -115,7 +116,9 @@ export function InlinePriceDisplay({
     <div>
       <span className='text-muted-foreground'>{label}:</span>
       {price !== null ? (
-        <span className={priceClassName}>{formatPrice(price)}</span>
+        <span className={priceClassName}>
+          {formatCurrency(price, { currency: 'USD', decimals: 2 })}
+        </span>
       ) : (
         <span className={errorClassName}>{getOKXErrorMessage(error)}</span>
       )}

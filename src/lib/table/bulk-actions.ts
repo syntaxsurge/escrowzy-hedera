@@ -5,7 +5,7 @@ import {
   showErrorToast,
   showSuccessToast
 } from '@/components/blocks/toast-manager'
-import { emitRowDeletion } from '@/hooks/use-table-selection'
+import { emitRowDeletion } from '@/hooks/table/use-table-selection'
 import { api } from '@/lib/api/http-client'
 
 interface BulkDeleteOptions {

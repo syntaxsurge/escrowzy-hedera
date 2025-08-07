@@ -1,5 +1,5 @@
 import { cn } from '@/lib'
-import { formatRelativeTime, formatFullDateTime } from '@/lib/utils/string'
+import { formatDate } from '@/lib/utils/string'
 
 interface RelativeTimeProps {
   date: Date | string
@@ -14,10 +14,10 @@ export function RelativeTime({
 }: RelativeTimeProps) {
   return (
     <div className={cn('flex flex-col', className)}>
-      <span className='text-sm'>{formatRelativeTime(date)}</span>
+      <span className='text-sm'>{formatDate(date, 'relative')}</span>
       {showFullDate && (
         <span className='text-muted-foreground text-xs'>
-          {formatFullDateTime(date)}
+          {formatDate(date, 'full')}
         </span>
       )}
     </div>

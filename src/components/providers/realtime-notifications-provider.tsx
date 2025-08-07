@@ -3,12 +3,12 @@
 import { createContext, useContext, ReactNode } from 'react'
 
 import { appRoutes } from '@/config/app-routes'
-import { useBattleRealtime } from '@/hooks/use-battle-realtime'
-import { useListingRealtime } from '@/hooks/use-listing-realtime'
-import { useMessageNotifications } from '@/hooks/use-message-notifications'
+import { useMessageNotifications } from '@/hooks/chat/use-message-notifications'
+import { useBattleRealtime } from '@/hooks/notification/use-battle-realtime'
+import { useListingRealtime } from '@/hooks/notification/use-listing-realtime'
+import { useTradeRealtime } from '@/hooks/notification/use-trade-realtime'
 import { useSession } from '@/hooks/use-session'
 import { useToast } from '@/hooks/use-toast'
-import { useTradeRealtime } from '@/hooks/use-trade-realtime'
 import type { TradeWithUsers } from '@/types/trade'
 
 interface RealtimeNotificationsContextValue {
@@ -41,10 +41,7 @@ export function RealtimeNotificationsProvider({
   const { toast } = useToast()
 
   // Message notifications
-  useMessageNotifications({
-    userId: user?.id || 0,
-    enabled: !!user
-  })
+  useMessageNotifications(user?.id)
 
   // Trade real-time updates
   const { isConnected: tradeConnected } = useTradeRealtime({

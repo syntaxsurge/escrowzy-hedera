@@ -1,6 +1,6 @@
 import 'server-only'
 import { eq, and, sql } from 'drizzle-orm'
-import { createPublicClient, http, decodeEventLog } from 'viem'
+import { createPublicClient, http } from 'viem'
 
 import { timeConstants } from '@/config/app-routes'
 import { getCachedPrice } from '@/lib/api/price-service'
@@ -11,8 +11,7 @@ import {
   getChainNickname,
   getViemChain,
   getSupportedChainIds,
-  isSupportedChainId,
-  SUBSCRIPTION_MANAGER_ABI
+  isSupportedChainId
 } from '@/lib/blockchain'
 import { db } from '@/lib/db/drizzle'
 import { teams, paymentHistory } from '@/lib/db/schema'
@@ -20,6 +19,7 @@ import {
   parseNativeAmount,
   formatNativeAmount
 } from '@/lib/utils/token-helpers'
+import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 import {
   updatePersonalSubscription,
   getUserPersonalSubscription
@@ -200,15 +200,17 @@ export async function verifyAndConfirmPayment(
     // Parse transaction logs to verify the correct plan was paid for
     let paidPlanKey: number | null = null
 
-    for (const log of receipt.logs) {
-      try {
-        const decoded = decodeEventLog({
-          abi: SUBSCRIPTION_MANAGER_ABI,
+    // Create service instance for event decoding
+    const subscriptionService = new SubscriptionManagerService(networkId)
+
+    if (subscriptionService.contractAddress) {
+      for (const log of receipt.logs) {
+        const decoded = subscriptionService.decodeEventLog({
           data: log.data,
-          topics: log.topics
+          topics: Array.from(log.topics)
         })
 
-        if (decoded.eventName === 'SubscriptionPaid') {
+        if (decoded?.name === 'SubscriptionPaid') {
           // Extract planKey from the args array based on the event signature
           // event SubscriptionPaid(address indexed team, uint8 indexed planKey, uint256 paidUntil)
           const args = decoded.args as any
@@ -217,8 +219,6 @@ export async function verifyAndConfirmPayment(
             break
           }
         }
-      } catch {
-        // Continue to next log if this one doesn't decode
       }
     }
 

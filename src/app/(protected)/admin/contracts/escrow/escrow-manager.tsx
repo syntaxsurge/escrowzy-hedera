@@ -22,6 +22,7 @@ import {
   showErrorToast,
   showSuccessToast
 } from '@/components/blocks/toast-manager'
+import { EscrowCoreService } from '@/services/blockchain/escrow-core.service'
 import {
   ContractInfoCard,
   ContractTabs,
@@ -71,8 +72,7 @@ import { swrFetcher } from '@/lib/api/swr'
 import {
   DEFAULT_CHAIN_ID,
   isSupportedChainId,
-  getEscrowCoreAddress,
-  ESCROW_CORE_ABI
+  getEscrowCoreAddress
 } from '@/lib/blockchain'
 
 const statusColors: Record<string, string> = {
@@ -219,13 +219,10 @@ export function EscrowManager() {
     }
 
     await executeEscrowTransaction(
-      {
-        address: escrowAddress as `0x${string}`,
-        abi: ESCROW_CORE_ABI,
-        functionName: 'withdrawFees',
-        args: [], // withdrawFees takes no parameters
-        chainId: effectiveChainId
-      },
+      (() => {
+        const escrowService = new EscrowCoreService(effectiveChainId)
+        return escrowService.getTransactionConfig('withdrawFees', [])
+      })(),
       {
         messages: {
           pendingMessage: 'Withdrawing fees...',
@@ -255,27 +252,24 @@ export function EscrowManager() {
     }
 
     await updateFeeButton.execute(async () => {
-      await executeEscrowTransaction(
-        {
-          address: escrowAddress as `0x${string}`,
-          abi: ESCROW_CORE_ABI,
-          functionName: 'updateBaseFeePercentage',
-          args: [parseFloat(newFeePercentage) * 100], // Convert to basis points
-          chainId: effectiveChainId
-        },
-        {
-          messages: {
-            pendingMessage: 'Updating fee percentage...',
-            processingMessage: 'Processing fee update...',
-            confirmedMessage: 'Fee percentage updated successfully!',
-            failedMessage: 'Failed to update fee percentage'
-          },
-          onSuccess: () => {
-            showSuccessToast('Fee updated', `New fee: ${newFeePercentage}%`)
-            setNewFeePercentage('')
-          }
-        }
+      const escrowService = new EscrowCoreService(effectiveChainId)
+      const config = escrowService.getTransactionConfig(
+        'updateBaseFeePercentage',
+        [parseFloat(newFeePercentage) * 100] // Convert to basis points
       )
+
+      await executeEscrowTransaction(config, {
+        messages: {
+          pendingMessage: 'Updating fee percentage...',
+          processingMessage: 'Processing fee update...',
+          confirmedMessage: 'Fee percentage updated successfully!',
+          failedMessage: 'Failed to update fee percentage'
+        },
+        onSuccess: () => {
+          showSuccessToast('Fee updated', `New fee: ${newFeePercentage}%`)
+          setNewFeePercentage('')
+        }
+      })
     })
   }
 
@@ -291,30 +285,27 @@ export function EscrowManager() {
     }
 
     await updateWindowButton.execute(async () => {
-      await executeEscrowTransaction(
-        {
-          address: escrowAddress as `0x${string}`,
-          abi: ESCROW_CORE_ABI,
-          functionName: 'updateDefaultDisputeWindow',
-          args: [parseInt(newDisputeWindow) * 86400], // Convert days to seconds
-          chainId: effectiveChainId
-        },
-        {
-          messages: {
-            pendingMessage: 'Updating dispute window...',
-            processingMessage: 'Processing window update...',
-            confirmedMessage: 'Dispute window updated successfully!',
-            failedMessage: 'Failed to update dispute window'
-          },
-          onSuccess: () => {
-            showSuccessToast(
-              'Window updated',
-              `New window: ${newDisputeWindow} days`
-            )
-            setNewDisputeWindow('')
-          }
-        }
+      const escrowService = new EscrowCoreService(effectiveChainId)
+      const config = escrowService.getTransactionConfig(
+        'updateDefaultDisputeWindow',
+        [parseInt(newDisputeWindow) * 86400] // Convert days to seconds
       )
+
+      await executeEscrowTransaction(config, {
+        messages: {
+          pendingMessage: 'Updating dispute window...',
+          processingMessage: 'Processing window update...',
+          confirmedMessage: 'Dispute window updated successfully!',
+          failedMessage: 'Failed to update dispute window'
+        },
+        onSuccess: () => {
+          showSuccessToast(
+            'Window updated',
+            `New window: ${newDisputeWindow} days`
+          )
+          setNewDisputeWindow('')
+        }
+      })
     })
   }
 
@@ -328,35 +319,29 @@ export function EscrowManager() {
     }
 
     await resolveDisputeButton.execute(async () => {
-      await executeEscrowTransaction(
-        {
-          address: escrowAddress as `0x${string}`,
-          abi: ESCROW_CORE_ABI,
-          functionName: 'resolveDispute',
-          args: [
-            selectedDispute,
-            disputeResolution === 'refund',
-            disputeReason
-          ],
-          chainId: effectiveChainId
+      const escrowService = new EscrowCoreService(effectiveChainId)
+      const config = escrowService.getTransactionConfig('resolveDispute', [
+        selectedDispute,
+        disputeResolution === 'refund',
+        disputeReason
+      ])
+
+      await executeEscrowTransaction(config, {
+        messages: {
+          pendingMessage: 'Resolving dispute...',
+          processingMessage: 'Processing dispute resolution...',
+          confirmedMessage: 'Dispute resolved successfully!',
+          failedMessage: 'Failed to resolve dispute'
         },
-        {
-          messages: {
-            pendingMessage: 'Resolving dispute...',
-            processingMessage: 'Processing dispute resolution...',
-            confirmedMessage: 'Dispute resolved successfully!',
-            failedMessage: 'Failed to resolve dispute'
-          },
-          onSuccess: () => {
-            showSuccessToast(
-              'Dispute resolved',
-              `Escrow #${selectedDispute} ${disputeResolution === 'refund' ? 'refunded to buyer' : 'released to seller'}`
-            )
-            setSelectedDispute(null)
-            setDisputeReason('')
-          }
+        onSuccess: () => {
+          showSuccessToast(
+            'Dispute resolved',
+            `Escrow #${selectedDispute} ${disputeResolution === 'refund' ? 'refunded to buyer' : 'released to seller'}`
+          )
+          setSelectedDispute(null)
+          setDisputeReason('')
         }
-      )
+      })
     })
   }
 
@@ -369,37 +354,34 @@ export function EscrowManager() {
     const isPaused = statsData?.settings?.isPaused
 
     await pauseButton.execute(async () => {
-      await executeEscrowTransaction(
-        {
-          address: escrowAddress as `0x${string}`,
-          abi: ESCROW_CORE_ABI,
-          functionName: isPaused ? 'unpause' : 'pause',
-          args: [],
-          chainId: effectiveChainId
-        },
-        {
-          messages: {
-            pendingMessage: isPaused
-              ? 'Resuming contract...'
-              : 'Pausing contract...',
-            processingMessage: isPaused
-              ? 'Processing resume...'
-              : 'Processing pause...',
-            confirmedMessage: isPaused
-              ? 'Contract resumed successfully!'
-              : 'Contract paused successfully!',
-            failedMessage: isPaused
-              ? 'Failed to resume contract'
-              : 'Failed to pause contract'
-          },
-          onSuccess: () => {
-            showSuccessToast(
-              isPaused ? 'Contract resumed' : 'Contract paused',
-              isPaused ? 'Contract is now active' : 'Contract is now paused'
-            )
-          }
-        }
+      const escrowService = new EscrowCoreService(effectiveChainId)
+      const config = escrowService.getTransactionConfig(
+        isPaused ? 'unpause' : 'pause',
+        []
       )
+
+      await executeEscrowTransaction(config, {
+        messages: {
+          pendingMessage: isPaused
+            ? 'Resuming contract...'
+            : 'Pausing contract...',
+          processingMessage: isPaused
+            ? 'Processing resume...'
+            : 'Processing pause...',
+          confirmedMessage: isPaused
+            ? 'Contract resumed successfully!'
+            : 'Contract paused successfully!',
+          failedMessage: isPaused
+            ? 'Failed to resume contract'
+            : 'Failed to pause contract'
+        },
+        onSuccess: () => {
+          showSuccessToast(
+            isPaused ? 'Contract resumed' : 'Contract paused',
+            isPaused ? 'Contract is now active' : 'Contract is now paused'
+          )
+        }
+      })
     })
   }
 

@@ -1,6 +1,6 @@
 import { cn } from '@/lib'
 import { ActivityType } from '@/lib/db/schema'
-import { formatRelativeTime } from '@/lib/utils/string'
+import { formatDate } from '@/lib/utils/string'
 import { getUserDisplayName } from '@/lib/utils/user'
 import {
   ACTIVITY_COLORS,
@@ -48,7 +48,7 @@ export function RecentActivityList({ activities }: RecentActivityListProps) {
               </div>
             </div>
             <span className='text-muted-foreground text-xs'>
-              {formatRelativeTime(activity.timestamp)}
+              {formatDate(activity.timestamp, 'relative')}
             </span>
           </div>
         )

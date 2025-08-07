@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 
 import { getSession } from '@/lib/auth/session'
-import { FeeValidationService } from '@/services/blockchain/fee-validation'
+import { withEscrowValidation } from '@/lib/blockchain/contract-validation'
+import { EscrowCoreService } from '@/services/blockchain/escrow-core.service'
+import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 
 export async function POST(request: Request) {
   try {
@@ -35,11 +37,17 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create fee validation service for the specified chain
-    const feeService = new FeeValidationService(chainId)
+    // Create escrow service for the specified chain
+    const escrowService = new EscrowCoreService(chainId)
+    if (!escrowService.contractAddress) {
+      return NextResponse.json(
+        { success: false, error: 'Service not available for this chain' },
+        { status: 400 }
+      )
+    }
 
-    // Calculate fee securely on the server side
-    const feeData = await feeService.calculateUserFee(address, amount)
+    // Calculate fee securely on the server side using the service method
+    const feeData = await escrowService.calculateUserFee(address, amount)
 
     return NextResponse.json({
       success: true,
@@ -68,55 +76,28 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
-  try {
-    const session = await getSession()
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    const { searchParams } = new URL(request.url)
-    const chainId = parseInt(searchParams.get('chainId') || '1')
-
+// GET endpoint using centralized validation
+export const GET = withEscrowValidation(
+  async ({ escrowService, chainId, session }) => {
     const address = session.user.walletAddress
     if (!address) {
-      return NextResponse.json(
-        { success: false, error: 'No wallet address available' },
-        { status: 400 }
-      )
+      throw new Error('No wallet address available')
     }
 
-    // Create fee validation service for the specified chain
-    const feeService = new FeeValidationService(chainId)
+    // Get user's fee percentage using the service
+    const feePercentage = await escrowService.getUserFeePercentage(address)
 
-    // Get user's fee percentage
-    const feePercentage = await feeService.getUserFeePercentage(address)
+    // Get all plan fee tiers from subscription service
+    const subscriptionService = new SubscriptionManagerService(chainId)
+    const planFeeTiers = subscriptionService.contractAddress
+      ? await subscriptionService.getAllPlanFeeTiers()
+      : {}
 
-    // Get all plan fee tiers
-    const planFeeTiers = await feeService.getAllPlanFeeTiers()
-
-    return NextResponse.json({
-      success: true,
+    return {
       userFeePercentage: feePercentage,
       planFeeTiers,
       chainId,
       userAddress: address
-    })
-  } catch (error) {
-    console.error('Error fetching fee information:', error)
-
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to fetch fee information'
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: errorMessage
-      },
-      { status: 500 }
-    )
+    }
   }
-}
+)

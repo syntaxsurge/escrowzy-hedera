@@ -47,7 +47,7 @@ import { apiEndpoints } from '@/config/api-endpoints'
 import { envPublic } from '@/config/env.public'
 import { useBlockchain } from '@/context'
 import { useEscrow } from '@/hooks/blockchain/use-escrow'
-import { useSecureFee } from '@/hooks/use-secure-fee'
+import { useSecureFee } from '@/hooks/blockchain/use-secure-fee'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import { handleFormError } from '@/lib/utils/form'
@@ -130,7 +130,7 @@ export function TradeActionDialog({
   useEffect(() => {
     if (open && trade.amount && chainId) {
       // Calculate fee securely on server side
-      calculateFee(trade.amount, chainId, address).then(result => {
+      calculateFee(trade.amount, chainId, address).then((result: any) => {
         if (result) {
           setCalculatedFee(result.feeAmount.toFixed(6))
           setFeePercentage(result.feePercentage)
@@ -746,7 +746,7 @@ export function TradeActionDialog({
               <div className='flex justify-between'>
                 <span className='text-muted-foreground text-sm'>Amount</span>
                 <span className='font-medium'>
-                  {formatCurrency(trade.amount, trade.currency)}
+                  {formatCurrency(trade.amount, { currency: trade.currency })}
                 </span>
               </div>
               <div className='flex justify-between'>
@@ -801,7 +801,9 @@ export function TradeActionDialog({
                         <p>
                           The escrow smart contract will receive{' '}
                           <strong>
-                            {formatCurrency(trade.amount, trade.currency)}
+                            {formatCurrency(trade.amount, {
+                              currency: trade.currency
+                            })}
                           </strong>{' '}
                           automatically when you confirm the transaction.
                         </p>
@@ -1022,7 +1024,9 @@ export function TradeActionDialog({
                             <div className='flex justify-between'>
                               <span>Amount to Send:</span>
                               <span className='font-medium'>
-                                {formatCurrency(trade.amount, 'USD')}
+                                {formatCurrency(trade.amount, {
+                                  currency: 'USD'
+                                })}
                               </span>
                             </div>
                             <div className='flex justify-between'>
@@ -1111,7 +1115,9 @@ export function TradeActionDialog({
                             <p>
                               You will send{' '}
                               <span className='font-bold'>
-                                {formatCurrency(trade.amount, trade.currency)}
+                                {formatCurrency(trade.amount, {
+                                  currency: trade.currency
+                                })}
                               </span>{' '}
                               to the escrow smart contract.
                             </p>
@@ -1196,9 +1202,11 @@ export function TradeActionDialog({
                         <Shield className='h-4 w-4' />
                         <AlertDescription>
                           Send exactly{' '}
-                          {formatCurrency(trade.amount, trade.currency)} to the
-                          escrow contract. The transaction hash will be verified
-                          on-chain.
+                          {formatCurrency(trade.amount, {
+                            currency: trade.currency
+                          })}{' '}
+                          to the escrow contract. The transaction hash will be
+                          verified on-chain.
                         </AlertDescription>
                       </Alert>
 
@@ -1288,7 +1296,9 @@ export function TradeActionDialog({
                             <p>
                               By confirming, you acknowledge receiving the fiat
                               payment and will release{' '}
-                              {formatCurrency(trade.amount, trade.currency)}{' '}
+                              {formatCurrency(trade.amount, {
+                                currency: trade.currency
+                              })}{' '}
                               from escrow to the buyer.
                             </p>
                             <p className='text-sm text-blue-600 dark:text-blue-400'>
@@ -1334,7 +1344,9 @@ export function TradeActionDialog({
                                 Amount to release:
                               </span>
                               <span className='font-bold'>
-                                {formatCurrency(trade.amount, trade.currency)}
+                                {formatCurrency(trade.amount, {
+                                  currency: trade.currency
+                                })}
                               </span>
                             </div>
                             <div className='flex justify-between text-sm'>

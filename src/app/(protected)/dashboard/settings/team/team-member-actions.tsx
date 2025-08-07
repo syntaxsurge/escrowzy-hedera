@@ -27,9 +27,9 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { emitRowDeletion } from '@/hooks/table/use-table-selection'
 import { useDialogState } from '@/hooks/use-dialog-state'
 import { useLoading } from '@/hooks/use-loading'
-import { emitRowDeletion } from '@/hooks/use-table-selection'
 
 interface TeamMemberActionsProps {
   memberId: number

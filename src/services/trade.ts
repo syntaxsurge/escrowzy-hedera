@@ -950,11 +950,14 @@ export async function depositToEscrow(input: {
     }
 
     // Get fee directly from blockchain
-    const { FeeValidationService } = await import(
-      '@/services/blockchain/fee-validation'
+    const { EscrowCoreService } = await import(
+      '@/services/blockchain/escrow-core.service'
     )
-    const feeService = new FeeValidationService(trade.chainId)
-    const feeData = await feeService.calculateUserFee(
+    const escrowService = new EscrowCoreService(trade.chainId)
+    if (!escrowService.contractAddress) {
+      throw new Error('Escrow service not available for this chain')
+    }
+    const feeData = await escrowService.calculateUserFee(
       buyer.walletAddress,
       amount
     )

@@ -8,7 +8,7 @@ import AchievementNFTArtifact from '../../../contracts/abi/AchievementNFT.json'
 import EscrowCoreArtifact from '../../../contracts/abi/EscrowCore.json'
 import SubscriptionManagerArtifact from '../../../contracts/abi/SubscriptionManager.json'
 
-// Extract ABIs from artifacts
+// Extract ABIs from artifacts (internal use only - use service classes instead)
 export const SUBSCRIPTION_MANAGER_ABI = SubscriptionManagerArtifact.abi
 export const ESCROW_CORE_ABI = EscrowCoreArtifact.abi
 export const ACHIEVEMENT_NFT_ABI = AchievementNFTArtifact.abi

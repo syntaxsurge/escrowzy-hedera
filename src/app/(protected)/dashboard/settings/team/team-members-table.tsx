@@ -15,7 +15,10 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { apiEndpoints } from '@/config/api-endpoints'
-import { useTableSelection, emitRowDeletion } from '@/hooks/use-table-selection'
+import {
+  useTableSelection,
+  emitRowDeletion
+} from '@/hooks/table/use-table-selection'
 import { api } from '@/lib/api/http-client'
 import {
   createSelectColumnConfig,

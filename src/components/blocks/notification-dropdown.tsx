@@ -47,7 +47,7 @@ import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib'
 import { api } from '@/lib/api/http-client'
 import { swrConfig, swrFetcher } from '@/lib/api/swr'
-import { formatRelativeTime } from '@/lib/utils/string'
+import { formatDate } from '@/lib/utils/string'
 
 // Notification type
 interface Notification {
@@ -433,7 +433,7 @@ export function NotificationDropdown() {
                       <div className='text-muted-foreground/60 mt-2 flex items-center gap-1 text-xs'>
                         <Clock className='h-3 w-3' />
                         <span>
-                          {formatRelativeTime(notification.timestamp)}
+                          {formatDate(notification.timestamp, 'relative')}
                         </span>
                       </div>
                     </div>

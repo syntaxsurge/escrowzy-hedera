@@ -21,9 +21,10 @@ import { appRoutes } from '@/config/app-routes'
 import { useUnifiedWalletInfo } from '@/context'
 import { useTransaction } from '@/hooks/blockchain/use-transaction'
 import { api } from '@/lib/api/http-client'
-import { buildTxUrl, SUBSCRIPTION_MANAGER_ABI } from '@/lib/blockchain'
-import { formatCryptoAmount } from '@/lib/blockchain/payment'
+import { buildTxUrl } from '@/lib/blockchain'
+import { formatCurrency } from '@/lib/utils/string'
 import { formatTeamMemberLimit } from '@/lib/utils/subscription'
+import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 import { type PaymentIntent } from '@/types/payment'
 
 interface CryptoPaymentModalProps {
@@ -128,26 +129,25 @@ export function CryptoPaymentModal({
     if (!paymentIntent || !address) return
 
     try {
-      await executeTransaction(
-        {
-          address: paymentIntent.contractAddress as `0x${string}`,
-          abi: SUBSCRIPTION_MANAGER_ABI as any,
-          functionName: 'paySubscription',
-          args: [address as `0x${string}`, paymentIntent.planKey],
-          value: BigInt(paymentIntent.amountWei),
-          chainId: paymentIntent.networkId
-        },
-        {
-          messages: {
-            pendingMessage: `Purchasing ${paymentIntent.plan?.name || 'subscription'} plan...`,
-            processingMessage: 'Processing your subscription payment...',
-            confirmedMessage: paymentIntent.plan?.id?.includes('team')
-              ? `Team ${paymentIntent.plan?.name || 'subscription'} plan activated successfully!`
-              : `Personal ${paymentIntent.plan?.name || 'subscription'} plan activated successfully!`,
-            failedMessage: 'Payment failed'
-          }
-        }
+      const subscriptionService = new SubscriptionManagerService(
+        paymentIntent.networkId
       )
+      const config = subscriptionService.getTransactionConfig(
+        'paySubscription',
+        [address as `0x${string}`, paymentIntent.planKey],
+        BigInt(paymentIntent.amountWei)
+      )
+
+      await executeTransaction(config, {
+        messages: {
+          pendingMessage: `Purchasing ${paymentIntent.plan?.name || 'subscription'} plan...`,
+          processingMessage: 'Processing your subscription payment...',
+          confirmedMessage: paymentIntent.plan?.id?.includes('team')
+            ? `Team ${paymentIntent.plan?.name || 'subscription'} plan activated successfully!`
+            : `Personal ${paymentIntent.plan?.name || 'subscription'} plan activated successfully!`,
+          failedMessage: 'Payment failed'
+        }
+      })
     } catch (_) {
       // Error is already handled by the hook
     }
@@ -266,7 +266,10 @@ export function CryptoPaymentModal({
               <div className='flex justify-between'>
                 <span className='text-muted-foreground text-sm'>Amount</span>
                 <span className='text-sm font-medium'>
-                  {formatCryptoAmount(paymentIntent.amount)}{' '}
+                  {formatCurrency(paymentIntent.amount, {
+                    currency: paymentIntent.currency,
+                    showSymbol: false
+                  })}{' '}
                   {paymentIntent.currency}
                 </span>
               </div>
@@ -383,7 +386,10 @@ export function CryptoPaymentModal({
                         Amount Paid
                       </span>
                       <span className='text-sm font-medium'>
-                        {formatCryptoAmount(paymentIntent?.amount || '0')}{' '}
+                        {formatCurrency(paymentIntent?.amount || '0', {
+                          currency: paymentIntent?.currency,
+                          showSymbol: false
+                        })}{' '}
                         {paymentIntent?.currency}
                       </span>
                     </div>

@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { createPublicClient, http } from 'viem'
-
 import { withAdminAuth } from '@/lib/api/auth-middleware'
 import {
   getEscrowCoreAddress,
-  getViemChain,
-  ESCROW_CORE_ABI,
   getSupportedChainIds,
-  getChainConfig
+  getChainConfig,
+  getChainNickname,
+  getNativeCurrencySymbol
 } from '@/lib/blockchain'
 import { formatNativeAmount } from '@/lib/utils/token-helpers'
+import { EscrowCoreService } from '@/services/blockchain/escrow-core.service'
 
 async function handler(
   req: NextRequest,
@@ -21,9 +20,9 @@ async function handler(
     const chainId = parseInt(searchParams.get('chainId') || '')
 
     const contractAddress = getEscrowCoreAddress(chainId)
-    const chain = getViemChain(chainId)
+    const chainName = getChainNickname(chainId)
 
-    if (!contractAddress || !chain) {
+    if (!contractAddress) {
       const supportedChains = getSupportedChainIds()
         .map(id => getChainConfig(id))
         .filter(config => config && getEscrowCoreAddress(config.chainId))
@@ -34,20 +33,28 @@ async function handler(
           type: 'configuration_error',
           error: 'Smart contract not configured for this network',
           chainId,
-          chainName: chain?.name || `Chain ${chainId}`,
+          chainName: chainName || `Chain ${chainId}`,
           supportedChains
         },
         { status: 404 }
       )
     }
 
-    // Create public client for reading contract
-    const publicClient = createPublicClient({
-      chain,
-      transport: http()
-    })
+    // Create service instance
+    const escrowService = new EscrowCoreService(chainId)
+    if (!escrowService.contractAddress) {
+      return NextResponse.json(
+        {
+          type: 'service_error',
+          error: 'Failed to initialize escrow service',
+          chainId,
+          chainName
+        },
+        { status: 500 }
+      )
+    }
 
-    // Fetch all contract data in parallel
+    // Fetch all contract data in parallel using the service
     const [
       stats,
       availableFees,
@@ -56,69 +63,35 @@ async function handler(
       feeRecipient,
       isPaused
     ] = await Promise.all([
-      publicClient.readContract({
-        address: contractAddress as `0x${string}`,
-        abi: ESCROW_CORE_ABI,
-        functionName: 'getEscrowStats'
-      }),
-      publicClient.readContract({
-        address: contractAddress as `0x${string}`,
-        abi: ESCROW_CORE_ABI,
-        functionName: 'getAvailableFees'
-      }),
-      publicClient.readContract({
-        address: contractAddress as `0x${string}`,
-        abi: ESCROW_CORE_ABI,
-        functionName: 'baseFeePercentage'
-      }),
-      publicClient.readContract({
-        address: contractAddress as `0x${string}`,
-        abi: ESCROW_CORE_ABI,
-        functionName: 'defaultDisputeWindow'
-      }),
-      publicClient.readContract({
-        address: contractAddress as `0x${string}`,
-        abi: ESCROW_CORE_ABI,
-        functionName: 'feeRecipient'
-      }),
-      publicClient.readContract({
-        address: contractAddress as `0x${string}`,
-        abi: ESCROW_CORE_ABI,
-        functionName: 'paused'
-      })
+      escrowService.getEscrowStats(),
+      escrowService.getAvailableFees(),
+      escrowService.getBaseFeePercentage(),
+      escrowService.getDefaultDisputeWindow(),
+      escrowService.getFeeRecipient(),
+      escrowService.isPaused()
     ])
 
-    const nativeCurrency = chain.nativeCurrency.symbol
-    // Type assertion for stats tuple
-    const escrowStats = stats as readonly [
-      bigint,
-      bigint,
-      bigint,
-      bigint,
-      bigint,
-      bigint,
-      bigint
-    ]
-    const totalVolume = formatNativeAmount(escrowStats[4], chainId)
-    const totalFeesCollected = formatNativeAmount(escrowStats[5], chainId)
-    const availableFeesFormatted = formatNativeAmount(
-      availableFees as bigint,
+    const nativeCurrency = getNativeCurrencySymbol(chainId)
+    const totalVolume = formatNativeAmount(stats.totalVolume, chainId)
+    const totalFeesCollected = formatNativeAmount(
+      stats.totalFeesCollected,
       chainId
     )
+    const availableFeesFormatted = formatNativeAmount(availableFees, chainId)
 
     // Calculate average values
-    const totalEscrows = Number(escrowStats[0])
+    const totalEscrows = stats.totalEscrows
     const averageEscrowValue =
       totalEscrows > 0 ? parseFloat(totalVolume) / totalEscrows : 0
     const disputeRate =
-      totalEscrows > 0 ? (Number(escrowStats[3]) / totalEscrows) * 100 : 0
+      totalEscrows > 0 ? (stats.disputedEscrows / totalEscrows) * 100 : 0
 
     return NextResponse.json({
       stats: {
-        totalEscrows: Number(escrowStats[0]),
-        activeEscrows: Number(escrowStats[1]),
-        completedEscrows: Number(escrowStats[2]),
-        disputedEscrows: Number(escrowStats[3]),
+        totalEscrows: stats.totalEscrows,
+        activeEscrows: stats.activeEscrows,
+        completedEscrows: stats.completedEscrows,
+        disputedEscrows: stats.disputedEscrows,
         totalVolume,
         totalFeesCollected,
         availableFees: availableFeesFormatted,
@@ -128,15 +101,15 @@ async function handler(
         nativeCurrency
       },
       settings: {
-        feePercentage: Number(feePercentage as bigint) / 100, // Convert basis points to percentage
-        disputeWindow: Number(disputeWindow as bigint),
-        isPaused: isPaused as boolean,
-        feeRecipient: feeRecipient as string
+        feePercentage,
+        disputeWindow,
+        isPaused,
+        feeRecipient
       },
       contractInfo: {
         address: contractAddress,
         chainId,
-        chainName: chain.name
+        chainName
       }
     })
   } catch (error) {

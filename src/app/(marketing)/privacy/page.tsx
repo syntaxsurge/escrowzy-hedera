@@ -2,8 +2,8 @@ import { Metadata } from 'next'
 
 import { MarkdownViewer } from '@/components/blocks/markdown-viewer'
 import { envPublic } from '@/config/env.public'
-import { formatDate } from '@/lib'
 import { getLegalDocumentByType } from '@/lib/db/queries/legal-documents'
+import { formatDate } from '@/lib/utils/string'
 
 export const dynamic = 'force-dynamic'
 

@@ -26,10 +26,10 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { useToast } from '@/hooks/use-toast'
-import { formatDate } from '@/lib'
 import { api } from '@/lib/api/http-client'
 import { nonEmptyString } from '@/lib/schemas/common'
 import { handleFormSuccess } from '@/lib/utils/form'
+import { formatDate } from '@/lib/utils/string'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 

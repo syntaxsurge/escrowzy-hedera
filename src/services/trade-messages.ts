@@ -31,7 +31,7 @@ export async function sendDepositMessage(
 
     const message = `🔒 **Crypto Deposited to Escrow**\n\nSeller has successfully deposited ${formatCurrency(
       trade.amount,
-      trade.currency
+      { currency: trade.currency }
     )} to the escrow contract.\n\nTransaction: \`${shortHash}\`${
       blockchainUrl ? `\n[View on Blockchain Explorer](${blockchainUrl})` : ''
     }\n\nBuyer can now proceed with fiat payment.`
@@ -57,7 +57,7 @@ export async function sendPaymentProofMessage(
   try {
     const message = `💳 **Payment Sent**\n\nBuyer has marked the payment as sent and uploaded proof.\n\nAmount: ${formatCurrency(
       trade.amount,
-      trade.currency
+      { currency: trade.currency }
     )}\nPayment Method: ${trade.metadata?.paymentMethod || 'Bank Transfer'}\n\nSeller, please check your payment account and confirm once received.`
 
     const attachments = imageUrls.map((url, index) => ({
@@ -89,10 +89,9 @@ export async function sendPaymentConfirmedMessage(
     const feeAmount = trade.metadata?.escrowFeeAmount
     const message = `✅ **Payment Confirmed**\n\nSeller has confirmed receipt of the fiat payment.\n\nCrypto has been released from escrow to the buyer.\n\n${
       netAmount
-        ? `Amount Released: ${formatCurrency(
-            netAmount,
-            trade.currency
-          )} (after ${feeAmount} platform fee)`
+        ? `Amount Released: ${formatCurrency(netAmount, {
+            currency: trade.currency
+          })} (after ${feeAmount} platform fee)`
         : ''
     }\n\n🎉 Trade completed successfully!`
 

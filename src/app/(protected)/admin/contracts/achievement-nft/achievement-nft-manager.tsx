@@ -68,6 +68,11 @@ import {
   getAchievementNFTAddress,
   getChainConfig
 } from '@/lib/blockchain'
+import type {
+  CreateAchievementParams,
+  MintAchievementParams,
+  AchievementCategory
+} from '@/services/blockchain/achievement-nft.service'
 
 interface NFTStats {
   totalMinted: number
@@ -228,12 +233,36 @@ export function AchievementNFTManager() {
 
     try {
       await createAchievementButton.execute(async () => {
-        // TODO: Implement actual achievement creation logic
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        showSuccessToast(
-          'Achievement created',
-          `"${newAchievementName}" achievement type created`
+        if (!executeTransaction) {
+          throw new Error('Transaction execution not available')
+        }
+
+        const achievementParams: CreateAchievementParams = {
+          achievementId: Date.now(), // Generate unique ID based on timestamp
+          name: newAchievementName,
+          description: newAchievementDescription,
+          imageUrl: newAchievementImage,
+          category: 0 as AchievementCategory, // Default to TRADING category
+          requiredProgress: parseInt(newAchievementMaxSupply) || 1,
+          xpReward: 100, // Default XP reward
+          isActive: true
+        }
+
+        const contractAddress = getAchievementNFTAddress(effectiveChainId)
+        if (!contractAddress) {
+          throw new Error(
+            'Achievement NFT contract not deployed on this network'
+          )
+        }
+
+        // For now, we'll show a message that this needs backend implementation
+        // The actual contract interaction should be handled through the admin API
+        showErrorToast(
+          'Not implemented',
+          'Achievement creation requires backend API implementation'
         )
+
+        // Reset form
         setNewAchievementName('')
         setNewAchievementDescription('')
         setNewAchievementImage('')
@@ -260,12 +289,32 @@ export function AchievementNFTManager() {
 
     try {
       await mintButton.execute(async () => {
-        // TODO: Implement actual minting logic
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        showSuccessToast(
-          'NFT minted',
-          `Achievement NFT minted to ${mintRecipient}`
+        if (!executeTransaction) {
+          throw new Error('Transaction execution not available')
+        }
+
+        const mintParams: MintAchievementParams = {
+          to: mintRecipient,
+          achievementId: parseInt(mintAchievementId),
+          progress: 100, // Default to 100% progress
+          earnedAt: Math.floor(Date.now() / 1000) // Current timestamp in seconds
+        }
+
+        const contractAddress = getAchievementNFTAddress(effectiveChainId)
+        if (!contractAddress) {
+          throw new Error(
+            'Achievement NFT contract not deployed on this network'
+          )
+        }
+
+        // For now, we'll show a message that this needs backend implementation
+        // The actual contract interaction should be handled through the admin API
+        showErrorToast(
+          'Not implemented',
+          'Achievement minting requires backend API implementation'
         )
+
+        // Reset form
         setMintRecipient('')
         setMintAchievementId('')
       })
