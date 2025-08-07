@@ -17,7 +17,8 @@ import { db } from '@/lib/db/drizzle'
 import { teams, paymentHistory } from '@/lib/db/schema'
 import {
   parseNativeAmount,
-  formatNativeAmount
+  formatNativeAmount,
+  isHederaChain
 } from '@/lib/utils/token-helpers'
 import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 import {
@@ -251,9 +252,21 @@ export async function verifyAndConfirmPayment(
     }
 
     // Verify the transaction value matches the expected amount
-    if (transaction.value.toString() !== amount) {
+    // For Hedera, transaction.value comes in 18 decimals but we expect 8 decimals
+    let normalizedTransactionValue = transaction.value.toString()
+    let normalizedExpectedAmount = amount
+
+    if (isHederaChain(networkId)) {
+      // Convert transaction value from 18 decimals to 8 decimals for Hedera
+      // by dividing by 10^10
+      const txValueBigInt = BigInt(transaction.value)
+      const divisor = BigInt(10 ** 10)
+      normalizedTransactionValue = (txValueBigInt / divisor).toString()
+    }
+
+    if (normalizedTransactionValue !== normalizedExpectedAmount) {
       throw new Error(
-        `Amount mismatch: paid ${transaction.value} but expected ${amount}`
+        `Amount mismatch: paid ${normalizedTransactionValue} but expected ${normalizedExpectedAmount}`
       )
     }
 
