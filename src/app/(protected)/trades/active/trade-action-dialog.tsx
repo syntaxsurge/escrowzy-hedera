@@ -14,6 +14,7 @@ import {
   Mail
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import useSWR from 'swr'
 import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
 import { z } from 'zod'
@@ -93,7 +94,7 @@ const disputeSchema = z.object({
 export function TradeActionDialog({
   open,
   onOpenChange,
-  trade,
+  trade: propTrade,
   actionType,
   onSuccess
 }: TradeActionDialogProps) {
@@ -105,6 +106,26 @@ export function TradeActionDialog({
     confirmDelivery,
     isLoading: isBlockchainLoading
   } = useEscrow()
+
+  // Fetch fresh trade data when dialog opens for critical actions
+  const { data: freshTradeData } = useSWR(
+    open && (actionType === 'confirm' || actionType === 'deposit')
+      ? `${apiEndpoints.trades.byId(propTrade.id.toString())}`
+      : null,
+    async () => {
+      const res = await api.get(
+        apiEndpoints.trades.byId(propTrade.id.toString())
+      )
+      return res.success ? res.data : null
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false
+    }
+  )
+
+  // Use fresh trade data if available, otherwise use prop trade
+  const trade = freshTradeData || propTrade
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [paymentProofFiles, setPaymentProofFiles] = useState<File[]>([])
   const [disputeEvidenceFiles, setDisputeEvidenceFiles] = useState<File[]>([])
@@ -512,11 +533,16 @@ export function TradeActionDialog({
               return
             }
 
-            // Check if escrowId exists
-            if (!trade.escrowId) {
+            // Check if escrowId exists - handle both null and 0 cases
+            if (!trade.escrowId && trade.escrowId !== 0) {
+              // If we don't have fresh data, show a more helpful error
+              const errorMessage = !freshTradeData
+                ? 'Unable to fetch escrow information. Please refresh the page and try again.'
+                : 'This trade does not have an associated escrow.'
+
               toast({
                 title: 'No Escrow Found',
-                description: 'This trade does not have an associated escrow.',
+                description: errorMessage,
                 variant: 'destructive'
               })
               setIsSubmitting(false)
@@ -885,7 +911,7 @@ export function TradeActionDialog({
                     </Card>
                   )}
 
-                  {trade.escrowId ? (
+                  {trade.escrowId || trade.escrowId === 0 ? (
                     <Card className='bg-muted p-4'>
                       <div className='space-y-2 text-sm'>
                         <div className='flex items-center justify-between'>
@@ -1337,7 +1363,7 @@ export function TradeActionDialog({
                                 {address.slice(0, 6)}...{address.slice(-4)}
                               </span>
                             </div>
-                            {trade.escrowId && (
+                            {(trade.escrowId || trade.escrowId === 0) && (
                               <div className='flex justify-between text-sm'>
                                 <span className='text-muted-foreground'>
                                   Escrow ID:

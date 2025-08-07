@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import { MessageSquare, MoreVertical } from 'lucide-react'
 
@@ -48,11 +48,26 @@ export function TradeTable({ trades, onUpdate }: TradeTableProps) {
     'fund' | 'confirm' | 'dispute' | 'payment_sent' | null
   >(null)
 
+  // Update selectedTrade when trades list changes to ensure we have fresh data
+  useEffect(() => {
+    if (selectedTrade && trades.length > 0) {
+      const updatedTrade = trades.find(t => t.id === selectedTrade.id)
+      if (
+        updatedTrade &&
+        JSON.stringify(updatedTrade) !== JSON.stringify(selectedTrade)
+      ) {
+        setSelectedTrade(updatedTrade)
+      }
+    }
+  }, [trades, selectedTrade])
+
   const handleAction = (
     trade: TradeWithUsers,
     action: 'fund' | 'confirm' | 'dispute' | 'payment_sent'
   ) => {
-    setSelectedTrade(trade)
+    // Always use the fresh trade from the list
+    const freshTrade = trades.find(t => t.id === trade.id) || trade
+    setSelectedTrade(freshTrade)
     setActionType(action)
     setActionDialogOpen(true)
   }
