@@ -28,6 +28,9 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
 
     /// team wallet → Unix timestamp (seconds) until which the subscription is active
     mapping(address => uint256) private _paidUntil;
+    
+    /// team wallet → active plan key
+    mapping(address => uint8) private _activePlan;
 
     /// planKey (1 = Pro, 2 = Enterprise, others reserved) → price in wei
     mapping(uint8 => uint256) public planPriceWei;
@@ -44,6 +47,7 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         bool isActive;
         uint256 sortOrder;
         bool isTeamPlan;
+        uint256 feeTierBasisPoints; // Fee tier in basis points (e.g., 250 = 2.5%)
     }
 
     /// @dev planKey → Plan details
@@ -130,7 +134,8 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
             features: freeFeatures,
             isActive: true,
             sortOrder: 1,
-            isTeamPlan: false
+            isTeamPlan: false,
+            feeTierBasisPoints: 250 // 2.5%
         });
         planKeys.push(0);
         planExists[0] = true;
@@ -152,7 +157,8 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
             features: proFeatures,
             isActive: true,
             sortOrder: 2,
-            isTeamPlan: false
+            isTeamPlan: false,
+            feeTierBasisPoints: 200 // 2.0%
         });
         planKeys.push(1);
         planExists[1] = true;
@@ -175,7 +181,8 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
             features: enterpriseFeatures,
             isActive: true,
             sortOrder: 3,
-            isTeamPlan: false
+            isTeamPlan: false,
+            feeTierBasisPoints: 150 // 1.5%
         });
         planKeys.push(2);
         planExists[2] = true;
@@ -198,7 +205,8 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
             features: teamProFeatures,
             isActive: true,
             sortOrder: 4,
-            isTeamPlan: true
+            isTeamPlan: true,
+            feeTierBasisPoints: 200 // 2.0%
         });
         planKeys.push(3);
         planExists[3] = true;
@@ -223,7 +231,8 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
             features: teamEnterpriseFeatures,
             isActive: true,
             sortOrder: 5,
-            isTeamPlan: true
+            isTeamPlan: true,
+            feeTierBasisPoints: 150 // 1.5%
         });
         planKeys.push(4);
         planExists[4] = true;
@@ -253,7 +262,8 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         string[] memory features,
         bool isActive,
         uint256 sortOrder,
-        bool isTeamPlan
+        bool isTeamPlan,
+        uint256 feeTierBasisPoints
     ) external onlyRole(ADMIN_ROLE) {
         require(!planExists[planKey], "Subscription: plan already exists");
         require(bytes(name).length > 0, "Subscription: name cannot be empty");
@@ -269,7 +279,8 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
             features: features,
             isActive: isActive,
             sortOrder: sortOrder,
-            isTeamPlan: isTeamPlan
+            isTeamPlan: isTeamPlan,
+            feeTierBasisPoints: feeTierBasisPoints
         });
 
         planKeys.push(planKey);
@@ -290,7 +301,8 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         string[] memory features,
         bool isActive,
         uint256 sortOrder,
-        bool isTeamPlan
+        bool isTeamPlan,
+        uint256 feeTierBasisPoints
     ) external onlyRole(ADMIN_ROLE) {
         require(planExists[planKey], "Subscription: plan does not exist");
         require(bytes(name).length > 0, "Subscription: name cannot be empty");
@@ -305,6 +317,7 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         plans[planKey].isActive = isActive;
         plans[planKey].sortOrder = sortOrder;
         plans[planKey].isTeamPlan = isTeamPlan;
+        plans[planKey].feeTierBasisPoints = feeTierBasisPoints;
 
         planPriceWei[planKey] = priceWei;
 
@@ -391,6 +404,7 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         uint256 startTime = _paidUntil[team] > block.timestamp ? _paidUntil[team] : block.timestamp;
         uint256 newExpiry = startTime + PERIOD;
         _paidUntil[team] = newExpiry;
+        _activePlan[team] = planKey; // Track the active plan
 
         // Track earnings
         totalEarnings += msg.value;
@@ -424,6 +438,7 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         uint256 startTime = _paidUntil[team] > block.timestamp ? _paidUntil[team] : block.timestamp;
         uint256 newExpiry = startTime + PERIOD;
         _paidUntil[team] = newExpiry;
+        _activePlan[team] = planKey; // Track the active plan
 
         // Track token earnings
         tokenEarnings[token] += amount;
@@ -573,6 +588,37 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
     function getPlanFeatures(uint8 planKey) external view returns (string[] memory) {
         require(planExists[planKey], "Subscription: plan does not exist");
         return plans[planKey].features;
+    }
+
+    /// @notice Get fee tier in basis points for a specific plan
+    /// @param planKey The plan key
+    /// @return Fee tier in basis points (e.g., 250 = 2.5%)
+    function getPlanFeeTier(uint8 planKey) external view returns (uint256) {
+        require(planExists[planKey], "Subscription: plan does not exist");
+        return plans[planKey].feeTierBasisPoints;
+    }
+
+    /// @notice Get fee tier for a user based on their active subscription
+    /// @param team The team address to check
+    /// @return Fee tier in basis points
+    function getUserFeeTier(address team) external view returns (uint256) {
+        // Check if team has active subscription
+        if (_paidUntil[team] > block.timestamp && planExists[_activePlan[team]]) {
+            return plans[_activePlan[team]].feeTierBasisPoints;
+        }
+        // Return free tier for users without active subscription
+        require(planExists[0], "Free plan not configured");
+        return plans[0].feeTierBasisPoints;
+    }
+
+    /// @notice Get active subscription plan for a team
+    /// @param team The team address
+    /// @return planKey The active plan key (0 if no active subscription)
+    function getActiveSubscriptionPlan(address team) external view returns (uint8) {
+        if (_paidUntil[team] > block.timestamp) {
+            return _activePlan[team];
+        }
+        return 0; // Free plan
     }
 
     /* -------------------------------------------------------------------------- */

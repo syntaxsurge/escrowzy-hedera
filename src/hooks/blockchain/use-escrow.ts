@@ -53,7 +53,7 @@ export interface BatchCreateEscrowParams {
 }
 
 export function useEscrow() {
-  const { chainId } = useBlockchain()
+  const { chainId, address } = useBlockchain()
   const { executeTransaction, isExecuting } = useTransaction()
   const { toast } = useToast()
   const [escrowDetails, _setEscrowDetails] = useState<EscrowDetails | null>(
@@ -209,8 +209,8 @@ export function useEscrow() {
       }
 
       try {
-        // Get fee percentage (default 2.5%)
-        const feePercentage = 0.025
+        // Get fee percentage from contract for the current user
+        const feePercentage = await calculateFeePercentage(address)
 
         // Calculate amounts with proper decimal handling for each chain
         const amounts = calculateEscrowAmounts(
@@ -449,40 +449,35 @@ export function useEscrow() {
 
   const calculateFeePercentage = useCallback(
     async (userAddress?: string): Promise<number> => {
-      try {
-        // Default fee percentage
-        let feePercentage = 0.025 // Default 2.5%
-
-        // Get user's subscription tier if address provided
-        if (userAddress && escrowAddress) {
-          try {
-            const { getPublicClient } = await import(
-              '@/lib/blockchain/blockchain-transaction'
-            )
-            const publicClient = getPublicClient(selectedChainId)
-
-            if (publicClient) {
-              const tier = await publicClient.readContract({
-                address: escrowAddress as `0x${string}`,
-                abi: ESCROW_CORE_ABI,
-                functionName: 'userSubscriptionTier',
-                args: [userAddress]
-              })
-
-              // Apply tiered fee percentage
-              if (tier === 2)
-                feePercentage = 0.015 // Enterprise 1.5%
-              else if (tier === 1) feePercentage = 0.02 // Pro 2.0%
-            }
-          } catch (error) {
-            console.error('Error getting user tier:', error)
-          }
-        }
-
-        return feePercentage
-      } catch {
-        return 0.025 // Default 2.5%
+      if (!userAddress || !escrowAddress) {
+        throw new Error(
+          'Cannot calculate fee without user address and contract'
+        )
       }
+
+      const { getPublicClient } = await import(
+        '@/lib/blockchain/blockchain-transaction'
+      )
+      const publicClient = getPublicClient(selectedChainId)
+
+      if (!publicClient) {
+        throw new Error('Unable to connect to blockchain')
+      }
+
+      // Query the getUserFeePercentage function which fetches from SubscriptionManager
+      const feeBasisPoints = await publicClient.readContract({
+        address: escrowAddress as `0x${string}`,
+        abi: ESCROW_CORE_ABI,
+        functionName: 'getUserFeePercentage',
+        args: [userAddress]
+      })
+
+      // Convert basis points to percentage (e.g., 250 -> 0.025)
+      if (!feeBasisPoints && feeBasisPoints !== 0n) {
+        throw new Error('Unable to fetch fee tier from contract')
+      }
+
+      return Number(feeBasisPoints) / 10000
     },
     [escrowAddress, selectedChainId]
   )

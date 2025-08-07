@@ -5,6 +5,12 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
+// Interface for SubscriptionManager
+interface ISubscriptionManager {
+    function getUserFeeTier(address team) external view returns (uint256);
+    function getActiveSubscriptionPlan(address team) external view returns (uint8);
+}
+
 /**
  * @title EscrowCore
  * @dev Core escrow contract for secure P2P trading with dispute resolution
@@ -53,15 +59,13 @@ contract EscrowCore is AccessControl, ReentrancyGuard, Pausable {
 
     // State variables
     uint256 public nextEscrowId;
-    uint256 public baseFeePercentage = 250; // 2.5% = 250 basis points
     uint256 public constant BASIS_POINTS = 10000;
     uint256 public defaultDisputeWindow = 7 days;
     address public feeRecipient;
     uint256 public totalFeesCollected;
     
-    // Tiered fee structure based on subscription levels
-    uint256 public proTierFeePercentage = 200; // 2.0% for Pro tier
-    uint256 public enterpriseTierFeePercentage = 150; // 1.5% for Enterprise tier
+    // SubscriptionManager contract reference (required)
+    ISubscriptionManager public subscriptionManager;
     
     // Multi-sig thresholds
     uint256 public multiSigThreshold = 10 ether; // Require multi-sig above this amount
@@ -84,9 +88,6 @@ contract EscrowCore is AccessControl, ReentrancyGuard, Pausable {
     mapping(address => uint256) public userActiveEscrowCount;
     mapping(uint256 => string) public disputeReasons;
     mapping(uint256 => string) public resolutionDetails;
-    
-    // Subscription tier mapping (set by external contract or admin)
-    mapping(address => uint8) public userSubscriptionTier; // 0: Free, 1: Pro, 2: Enterprise
     
     // Batch operation tracking
     mapping(address => uint256) public lastBatchOperation;
@@ -717,29 +718,26 @@ contract EscrowCore is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Calculate fee for an amount
+     * @dev Calculate fee for a specific user based on their subscription
+     * @param _user The user address
      * @param _amount The escrow amount
      * @return fee The calculated fee
      */
-    function calculateFee(uint256 _amount) external view returns (uint256 fee) {
-        return (_amount * baseFeePercentage) / BASIS_POINTS;
+    function calculateUserFee(address _user, uint256 _amount) external view returns (uint256 fee) {
+        uint256 feePercentage = _getTieredFeePercentage(_user);
+        return (_amount * feePercentage) / BASIS_POINTS;
+    }
+    
+    /**
+     * @dev Get the fee percentage for a specific user
+     * @param _user The user address
+     * @return Fee percentage in basis points
+     */
+    function getUserFeePercentage(address _user) external view returns (uint256) {
+        return _getTieredFeePercentage(_user);
     }
 
     // Admin functions
-
-    /**
-     * @dev Update base fee percentage
-     * @param _newFeePercentage New fee in basis points (250 = 2.5%)
-     */
-    function updateFeePercentage(uint256 _newFeePercentage) 
-        external 
-        onlyRole(ADMIN_ROLE) 
-    {
-        require(_newFeePercentage <= 1000, "Fee too high"); // Max 10%
-        uint256 oldFee = baseFeePercentage;
-        baseFeePercentage = _newFeePercentage;
-        emit FeeUpdated(oldFee, _newFeePercentage);
-    }
 
     /**
      * @dev Update fee recipient address
@@ -795,13 +793,11 @@ contract EscrowCore is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Internal function to get tiered fee percentage
+     * @dev Internal function to get tiered fee percentage from SubscriptionManager
      */
     function _getTieredFeePercentage(address user) internal view returns (uint256) {
-        uint8 tier = userSubscriptionTier[user];
-        if (tier == 2) return enterpriseTierFeePercentage; // Enterprise
-        if (tier == 1) return proTierFeePercentage; // Pro
-        return baseFeePercentage; // Free tier
+        require(address(subscriptionManager) != address(0), "SubscriptionManager not configured");
+        return subscriptionManager.getUserFeeTier(user);
     }
     
     /**
@@ -888,26 +884,12 @@ contract EscrowCore is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Set user subscription tier (called by subscription contract or admin)
+     * @dev Set the SubscriptionManager contract address
+     * @param _subscriptionManager Address of the SubscriptionManager contract
      */
-    function setUserSubscriptionTier(address user, uint8 tier) external onlyRole(ADMIN_ROLE) {
-        require(tier <= 2, "Invalid tier");
-        userSubscriptionTier[user] = tier;
-    }
-    
-    /**
-     * @dev Batch set user subscription tiers
-     */
-    function batchSetUserSubscriptionTiers(
-        address[] memory users,
-        uint8[] memory tiers
-    ) external onlyRole(ADMIN_ROLE) {
-        require(users.length == tiers.length, "Array lengths mismatch");
-        
-        for (uint256 i = 0; i < users.length; i++) {
-            require(tiers[i] <= 2, "Invalid tier");
-            userSubscriptionTier[users[i]] = tiers[i];
-        }
+    function setSubscriptionManager(address _subscriptionManager) external onlyRole(ADMIN_ROLE) {
+        require(_subscriptionManager != address(0), "Invalid address");
+        subscriptionManager = ISubscriptionManager(_subscriptionManager);
     }
     
     /**
@@ -950,23 +932,6 @@ contract EscrowCore is AccessControl, ReentrancyGuard, Pausable {
             (escrow.status == Status.FUNDED || escrow.status == Status.DELIVERED)) {
             _releaseFunds(_escrowId);
         }
-    }
-    
-    /**
-     * @dev Update fee tiers
-     */
-    function updateFeeTiers(
-        uint256 _baseFee,
-        uint256 _proFee,
-        uint256 _enterpriseFee
-    ) external onlyRole(ADMIN_ROLE) {
-        require(_baseFee <= 1000, "Base fee too high");
-        require(_proFee <= _baseFee, "Pro fee must be <= base fee");
-        require(_enterpriseFee <= _proFee, "Enterprise fee must be <= pro fee");
-        
-        baseFeePercentage = _baseFee;
-        proTierFeePercentage = _proFee;
-        enterpriseTierFeePercentage = _enterpriseFee;
     }
     
     /**

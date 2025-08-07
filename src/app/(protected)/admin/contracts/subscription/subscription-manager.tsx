@@ -70,6 +70,7 @@ interface ContractPlan {
   isActive: boolean
   sortOrder: string
   isTeamPlan: boolean
+  feeTierBasisPoints?: string | number // Fee tier in basis points
 }
 
 interface ContractEarnings {
@@ -105,6 +106,7 @@ interface CreatePlanForm {
   isActive: boolean
   sortOrder: string
   isTeamPlan: boolean
+  feeTierPercentage: string // Store as percentage (e.g., "2.5" for 2.5%)
 }
 
 interface EditPlanForm extends CreatePlanForm {
@@ -133,7 +135,8 @@ export function SubscriptionManager() {
     features: [],
     isActive: true,
     sortOrder: '0',
-    isTeamPlan: false
+    isTeamPlan: false,
+    feeTierPercentage: '2.5' // Default to 2.5%
   })
   const [editPlanForm, setEditPlanForm] = useState<EditPlanForm | null>(null)
 
@@ -267,7 +270,10 @@ export function SubscriptionManager() {
         features: createPlanForm.features.filter(f => f.trim() !== ''),
         isActive: createPlanForm.isActive,
         sortOrder: parseInt(createPlanForm.sortOrder),
-        isTeamPlan: createPlanForm.isTeamPlan
+        isTeamPlan: createPlanForm.isTeamPlan,
+        feeTierBasisPoints: Math.round(
+          parseFloat(createPlanForm.feeTierPercentage) * 100
+        ) // Convert percentage to basis points
       },
       effectiveChainId,
       {
@@ -307,7 +313,10 @@ export function SubscriptionManager() {
         features: editPlanForm.features.filter(f => f.trim() !== ''),
         isActive: editPlanForm.isActive,
         sortOrder: parseInt(editPlanForm.sortOrder),
-        isTeamPlan: editPlanForm.isTeamPlan
+        isTeamPlan: editPlanForm.isTeamPlan,
+        feeTierBasisPoints: Math.round(
+          parseFloat(editPlanForm.feeTierPercentage) * 100
+        ) // Convert percentage to basis points
       },
       effectiveChainId,
       {
@@ -415,7 +424,10 @@ export function SubscriptionManager() {
       features: [...plan.features],
       isActive: plan.isActive,
       sortOrder: plan.sortOrder,
-      isTeamPlan: plan.isTeamPlan
+      isTeamPlan: plan.isTeamPlan,
+      feeTierPercentage: plan.feeTierBasisPoints
+        ? (Number(plan.feeTierBasisPoints) / 100).toString()
+        : '2.5'
     })
     setEditingPlan(plan.planKey)
   }
@@ -430,7 +442,8 @@ export function SubscriptionManager() {
       features: [],
       isActive: true,
       sortOrder: '0',
-      isTeamPlan: false
+      isTeamPlan: false,
+      feeTierPercentage: '2.5'
     })
   }
 
@@ -1012,6 +1025,24 @@ export function SubscriptionManager() {
                             />
                           </div>
                           <div>
+                            <Label htmlFor='editFeeTier'>Trading Fee (%)</Label>
+                            <Input
+                              id='editFeeTier'
+                              type='number'
+                              step='0.1'
+                              min='0'
+                              max='10'
+                              value={editPlanForm.feeTierPercentage}
+                              onChange={e =>
+                                setEditPlanForm({
+                                  ...editPlanForm,
+                                  feeTierPercentage: e.target.value
+                                })
+                              }
+                              placeholder='e.g., 2.5 for 2.5%'
+                            />
+                          </div>
+                          <div>
                             <Label>Features</Label>
                             <div className='space-y-2'>
                               {editPlanForm.features.length > 0 ? (
@@ -1131,6 +1162,16 @@ export function SubscriptionManager() {
                                   ? -1
                                   : parseInt(plan.maxMembers)
                               )}
+                            </span>
+                          </div>
+
+                          <div className='flex items-center space-x-2'>
+                            <DollarSign className='text-muted-foreground h-4 w-4' />
+                            <span className='text-foreground text-sm'>
+                              Trading Fee:{' '}
+                              {plan.feeTierBasisPoints
+                                ? `${(Number(plan.feeTierBasisPoints) / 100).toFixed(1)}%`
+                                : '2.5%'}
                             </span>
                           </div>
 
@@ -1302,6 +1343,28 @@ export function SubscriptionManager() {
                             }))
                           }
                         />
+                      </div>
+
+                      <div>
+                        <Label htmlFor='planFeeTier'>Trading Fee (%)</Label>
+                        <Input
+                          id='planFeeTier'
+                          type='number'
+                          step='0.1'
+                          min='0'
+                          max='10'
+                          placeholder='2.5 for 2.5%'
+                          value={createPlanForm.feeTierPercentage}
+                          onChange={e =>
+                            setCreatePlanForm(prev => ({
+                              ...prev,
+                              feeTierPercentage: e.target.value
+                            }))
+                          }
+                        />
+                        <p className='text-muted-foreground mt-1 text-xs'>
+                          The trading fee percentage for this subscription tier
+                        </p>
                       </div>
                     </div>
 

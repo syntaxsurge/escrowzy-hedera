@@ -197,9 +197,6 @@ export const apiEndpoints = {
     base: '/api/upload',
     getFile: (path: string) => `/api/uploads/${path}`
   },
-  fees: {
-    preview: '/api/fees/preview'
-  },
   swap: {
     chains: '/api/swap/chains',
     balances: '/api/swap/balances',

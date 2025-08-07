@@ -14,7 +14,6 @@ import {
 } from 'drizzle-orm'
 
 import { appRoutes } from '@/config/app-routes'
-import { feeConstants } from '@/config/business-constants'
 import { envServer } from '@/config/env.server'
 import { db } from '@/lib/db/drizzle'
 import {
@@ -936,11 +935,32 @@ export async function depositToEscrow(input: {
     const metadata = (trade.metadata as TradeMetadata) || {}
     metadata.cryptoDepositTxHash = input.transactionHash
 
-    // Calculate fee using config
+    // Calculate fee securely from blockchain
     const amount = parseFloat(trade.amount)
-    const feePercent = feeConstants.BASE_PERCENTAGE / 100 // Convert percentage to decimal
-    const feeAmount = amount * feePercent
-    const netAmount = amount - feeAmount
+
+    // Get buyer's wallet address to fetch fee from blockchain
+    const [buyer] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, trade.buyerId))
+      .limit(1)
+
+    if (!buyer?.walletAddress) {
+      return { success: false, error: 'Buyer wallet address not found' }
+    }
+
+    // Get fee directly from blockchain
+    const { FeeValidationService } = await import(
+      '@/services/blockchain/fee-validation'
+    )
+    const feeService = new FeeValidationService(trade.chainId)
+    const feeData = await feeService.calculateUserFee(
+      buyer.walletAddress,
+      amount
+    )
+
+    const feeAmount = feeData.feeAmount
+    const netAmount = feeData.netAmount
 
     metadata.escrowFeeAmount = feeAmount.toFixed(6)
     metadata.escrowNetAmount = netAmount.toFixed(6)

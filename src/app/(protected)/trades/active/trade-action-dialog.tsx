@@ -47,6 +47,7 @@ import { apiEndpoints } from '@/config/api-endpoints'
 import { envPublic } from '@/config/env.public'
 import { useBlockchain } from '@/context'
 import { useEscrow } from '@/hooks/blockchain/use-escrow'
+import { useSecureFee } from '@/hooks/use-secure-fee'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import { handleFormError } from '@/lib/utils/form'
@@ -121,14 +122,22 @@ export function TradeActionDialog({
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const hasShownExpiredToastRef = useRef(false)
 
+  // Use secure server-side fee calculation
+  const { calculateFee } = useSecureFee()
+  const [feePercentage, setFeePercentage] = useState<number>(0)
+
   // Calculate fee when dialog opens or trade amount changes
   useEffect(() => {
-    if (open && trade.amount) {
-      // Calculate fee as 2.5% of the amount
-      const defaultFee = (parseFloat(trade.amount) * 0.025).toFixed(6)
-      setCalculatedFee(defaultFee)
+    if (open && trade.amount && chainId) {
+      // Calculate fee securely on server side
+      calculateFee(trade.amount, chainId, address).then(result => {
+        if (result) {
+          setCalculatedFee(result.feeAmount.toFixed(6))
+          setFeePercentage(result.feePercentage)
+        }
+      })
     }
-  }, [open, trade.amount])
+  }, [open, trade.amount, chainId, address, calculateFee])
 
   // Reset native conversion state when dialog closes
   useEffect(() => {
@@ -804,7 +813,9 @@ export function TradeActionDialog({
                             </span>
                           </div>
                           <div className='flex justify-between'>
-                            <span>Platform Fee (2.5%):</span>
+                            <span>
+                              Platform Fee ({feePercentage.toFixed(1)}%):
+                            </span>
                             <span className='font-mono'>
                               {calculatedFee} {trade.currency}
                             </span>

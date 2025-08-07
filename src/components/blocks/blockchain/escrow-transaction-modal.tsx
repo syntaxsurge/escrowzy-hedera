@@ -110,7 +110,7 @@ export function showEscrowTransactionModal({
             <>
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground text-sm'>
-                  Platform Fee (2.5%)
+                  Platform Fee
                 </span>
                 <span className='text-sm'>
                   {details.fee}{' '}

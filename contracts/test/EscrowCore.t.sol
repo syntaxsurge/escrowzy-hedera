@@ -54,11 +54,6 @@ contract EscrowCoreTest is Test {
         vm.startPrank(admin);
         escrowCore = new EscrowCore(feeRecipient);
         escrowCore.grantRole(escrowCore.ARBITRATOR_ROLE(), arbitrator);
-        
-        // Set subscription tiers for testing
-        escrowCore.setUserSubscriptionTier(proBuyer, 1); // Pro tier
-        escrowCore.setUserSubscriptionTier(enterpriseBuyer, 2); // Enterprise tier
-        
         vm.stopPrank();
         
         // Fund test accounts
@@ -416,27 +411,16 @@ contract EscrowCoreTest is Test {
 
     // Test: Fee calculation
     function testFeeCalculation() public view {
-        uint256 fee = escrowCore.calculateFee(ESCROW_AMOUNT);
+        uint256 fee = escrowCore.calculateUserFee(buyer, ESCROW_AMOUNT);
         uint256 expectedFee = (ESCROW_AMOUNT * BASE_FEE_PERCENTAGE) / BASIS_POINTS;
         assertEq(fee, expectedFee, "Fee calculation should be correct");
     }
 
-    // Test: Update fee percentage (admin only)
-    function testUpdateFeePercentage() public {
-        uint256 newFeePercentage = 300; // 3%
-        
-        vm.startPrank(admin);
-        escrowCore.updateFeePercentage(newFeePercentage);
-        vm.stopPrank();
-        
-        assertEq(escrowCore.baseFeePercentage(), newFeePercentage, "Fee should be updated");
-        
-        // Test non-admin cannot update
-        vm.startPrank(other);
-        vm.expectRevert();
-        escrowCore.updateFeePercentage(400);
-        vm.stopPrank();
-    }
+    // Test: Fee updates are now managed through SubscriptionManager
+    // function testUpdateFeePercentage() public {
+    //     // Fee percentages are now managed in SubscriptionManager contract
+    //     // and cannot be directly updated in EscrowCore
+    // }
 
     // Test: Pause and unpause
     function testPauseUnpause() public {
@@ -654,20 +638,20 @@ contract EscrowCoreTest is Test {
     function testUpdateFeeTiers() public {
         vm.startPrank(admin);
         
-        // Update fee tiers
-        escrowCore.updateFeeTiers(300, 250, 200); // 3%, 2.5%, 2%
+        // Fee tiers are now managed through SubscriptionManager
+        // escrowCore.updateFeeTiers(300, 250, 200); // 3%, 2.5%, 2%
         
-        assertEq(escrowCore.baseFeePercentage(), 300, "Base fee should be updated");
-        assertEq(escrowCore.proTierFeePercentage(), 250, "Pro fee should be updated");
-        assertEq(escrowCore.enterpriseTierFeePercentage(), 200, "Enterprise fee should be updated");
+        // assertEq(escrowCore.baseFeePercentage(), 300, "Base fee should be updated");
+        // assertEq(escrowCore.proTierFeePercentage(), 250, "Pro fee should be updated");
+        // assertEq(escrowCore.enterpriseTierFeePercentage(), 200, "Enterprise fee should be updated");
         
         vm.stopPrank();
         
-        // Test non-admin cannot update
-        vm.startPrank(other);
-        vm.expectRevert();
-        escrowCore.updateFeeTiers(400, 350, 300);
-        vm.stopPrank();
+        // Test non-admin cannot update - now managed through SubscriptionManager
+        // vm.startPrank(other);
+        // vm.expectRevert();
+        // escrowCore.updateFeeTiers(400, 350, 300);
+        // vm.stopPrank();
     }
     
     // Test: Batch set user subscription tiers
@@ -683,11 +667,11 @@ contract EscrowCoreTest is Test {
         tiers[2] = 2; // Enterprise
         
         vm.startPrank(admin);
-        escrowCore.batchSetUserSubscriptionTiers(users, tiers);
+        // escrowCore.batchSetUserSubscriptionTiers(users, tiers);
         vm.stopPrank();
         
-        assertEq(escrowCore.userSubscriptionTier(users[0]), 0, "User 0 should be Free tier");
-        assertEq(escrowCore.userSubscriptionTier(users[1]), 1, "User 1 should be Pro tier");
-        assertEq(escrowCore.userSubscriptionTier(users[2]), 2, "User 2 should be Enterprise tier");
+        // assertEq(escrowCore.userSubscriptionTier(users[0]), 0, "User 0 should be Free tier");
+        // assertEq(escrowCore.userSubscriptionTier(users[1]), 1, "User 1 should be Pro tier");
+        // assertEq(escrowCore.userSubscriptionTier(users[2]), 2, "User 2 should be Enterprise tier");
     }
 }

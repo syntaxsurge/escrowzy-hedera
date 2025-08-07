@@ -24,9 +24,9 @@ chains:
     coingeckoId: 'hedera-hashgraph'
     isTestnet: true
     contractAddresses:
-      subscriptionManager: '0x70681D100D1BC55C5feF52f0a01754beb63D0F42'
-      escrowCore: '0x630c92fC0AcF5B72cC2C2589fd9fbB475D45b991'
-      achievementNFT: '0x89CFE9834F353715d71c10EA22f143BF2962079f'
+      subscriptionManager: '0x16Ba3F0Ece29c930977C2aF14EFe504F845F5aDB'
+      escrowCore: '0xbC814f1518E56fD7A9E5474A0362780243f3CB86'
+      achievementNFT: '0x0d0ac3e772EFCa3EAf61f96A2387d4D99fFa747C'
 
   # Hedera Mainnet
   hederaMainnet:

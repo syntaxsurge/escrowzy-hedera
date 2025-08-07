@@ -101,47 +101,8 @@ export const battleConstants = {
   } as const
 } as const
 
-// Subscription tiers
-export const subscriptionTiers = {
-  FREE: {
-    name: 'Free',
-    price: 0,
-    maxTrades: 10,
-    maxListings: 5,
-    feePercentage: 2.5,
-    features: ['basic_trades', 'basic_listings']
-  },
-  PRO: {
-    name: 'Pro',
-    price: 29.99,
-    maxTrades: 100,
-    maxListings: 50,
-    feePercentage: 1.5,
-    features: [
-      'unlimited_trades',
-      'unlimited_listings',
-      'priority_support',
-      'advanced_analytics'
-    ]
-  },
-  ENTERPRISE: {
-    name: 'Enterprise',
-    price: 99.99,
-    maxTrades: -1, // Unlimited
-    maxListings: -1, // Unlimited
-    feePercentage: 1.0,
-    features: [
-      'unlimited_everything',
-      'dedicated_support',
-      'custom_features',
-      'api_access'
-    ]
-  }
-} as const
-
 // Fee structure
 export const feeConstants = {
-  BASE_PERCENTAGE: 2.5,
   MIN_FEE: 0.5,
   MAX_FEE: 500,
   BATTLE_DISCOUNT: 50, // 50% off
@@ -149,14 +110,7 @@ export const feeConstants = {
     { volume: 10000, discount: 0.1 }, // 10% off for > $10k volume
     { volume: 50000, discount: 0.2 }, // 20% off for > $50k volume
     { volume: 100000, discount: 0.3 } // 30% off for > $100k volume
-  ],
-  // Fee tiers by subscription plan
-  TIER_PERCENTAGES: {
-    free: 2.5,
-    pro: 2.0,
-    team: 1.5,
-    enterprise: 1.5
-  } as const
+  ]
 } as const
 
 // File upload constants
