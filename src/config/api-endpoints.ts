@@ -297,6 +297,7 @@ export const apiEndpoints = {
       }
     }
   },
+  prices: '/api/prices',
   market: {
     okxPrices: '/api/market/okx-prices',
     arbitrage: '/api/market/arbitrage',

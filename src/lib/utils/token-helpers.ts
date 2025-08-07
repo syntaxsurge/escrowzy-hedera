@@ -1,6 +1,7 @@
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'thirdweb'
 import { parseUnits, formatUnits } from 'viem'
 
+import { apiEndpoints } from '@/config/api-endpoints'
 import { okxDexClient } from '@/lib/api/okx-dex-client'
 import { getNativeCurrencyDecimals } from '@/lib/blockchain'
 
@@ -258,36 +259,48 @@ export function calculateEscrowAmounts(
 }
 
 /**
- * Get the current price of a cryptocurrency from the API
- * This is a client-safe function that calls the backend API
+ * Get the current price of a cryptocurrency
+ * Uses server-side price service when available, falls back to client API
  *
  * @param symbol - The cryptocurrency symbol (e.g., 'ETH', 'BTC')
  * @param coingeckoId - The CoinGecko ID (e.g., 'ethereum', 'bitcoin')
  * @returns The current USD price or null if unavailable
  */
-async function getClientSafePrice(
+async function getPrice(
   symbol: string,
   coingeckoId?: string
 ): Promise<number | null> {
   try {
-    const response = await fetch('/api/prices', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+    // Check if we're in a server environment
+    if (typeof window === 'undefined') {
+      // Server-side: use getCachedPrice directly
+      const { getCachedPrice } = await import('@/lib/api/price-service')
+      const priceResult = await getCachedPrice(coingeckoId || symbol, {
         symbol,
-        coingeckoId: coingeckoId || symbol.toLowerCase()
+        coingeckoId
       })
-    })
+      return priceResult?.price || null
+    } else {
+      // Client-side: use fetch API
+      const response = await fetch(apiEndpoints.prices, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          symbol,
+          coingeckoId: coingeckoId || symbol.toLowerCase()
+        })
+      })
 
-    if (!response.ok) {
-      console.error('Failed to fetch price:', response.statusText)
-      return null
+      if (!response.ok) {
+        console.error('Failed to fetch price:', response.statusText)
+        return null
+      }
+
+      const data = await response.json()
+      return data.price || null
     }
-
-    const data = await response.json()
-    return data.price || null
   } catch (error) {
     console.error('Error fetching price:', error)
     return null
@@ -337,7 +350,7 @@ export async function convertUSDToWei(
     const coingeckoId = getCoingeckoPriceId(chainId)
     const symbol = getNativeCurrencySymbol(chainId)
 
-    const price = await getClientSafePrice(symbol, coingeckoId)
+    const price = await getPrice(symbol, coingeckoId)
 
     if (!price || price <= 0) {
       throw new Error('Unable to fetch current price')
@@ -377,7 +390,7 @@ export async function convertWeiToUSD(
     const coingeckoId = getCoingeckoPriceId(chainId)
     const symbol = getNativeCurrencySymbol(chainId)
 
-    const price = await getClientSafePrice(symbol, coingeckoId)
+    const price = await getPrice(symbol, coingeckoId)
 
     if (!price || price <= 0) {
       throw new Error('Unable to fetch current price')
