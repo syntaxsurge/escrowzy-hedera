@@ -49,6 +49,7 @@ export const createP2PListingSchema = baseListingSchema.extend({
 export const createDomainListingSchema = z.object({
   listingCategory: z.literal(TradeCategory.DOMAIN),
   listingType: z.literal('sell'), // Domains are always for sale
+  chainId: z.string().optional(), // Add chainId as optional
   domainName: z
     .string()
     .min(1, 'Domain name is required')
@@ -144,6 +145,7 @@ export const updateListingSchema = z.object({
     .min(5, 'Payment window must be at least 5 minutes')
     .max(1440, 'Payment window cannot exceed 24 hours')
     .optional(),
+  chainId: z.string().optional(),
   isActive: z.boolean().optional()
 })
 

@@ -353,6 +353,15 @@ export const CHAINS: Record<string, ChainConfig> = {
     okxSupported: true,
     coingeckoId: 'bitcoin'
   },
+  '295': {
+    chainId: '295',
+    name: 'Hedera Mainnet',
+    shortName: 'hedera',
+    nativeCurrency: { symbol: 'HBAR', decimals: 8 },
+    isTestnet: false,
+    okxSupported: false,
+    coingeckoId: 'hedera-hashgraph'
+  },
 
   // ============ TESTNETS ============
   '11155111': {
@@ -533,6 +542,15 @@ export const CHAINS: Record<string, ChainConfig> = {
     nativeCurrency: { symbol: 'BERA', decimals: 18 },
     isTestnet: true,
     okxSupported: true
+  },
+  '296': {
+    chainId: '296',
+    name: 'Hedera Testnet',
+    shortName: 'hedera-testnet',
+    nativeCurrency: { symbol: 'HBAR', decimals: 8 },
+    isTestnet: true,
+    mainnetId: '295',
+    okxSupported: false
   }
 }
 

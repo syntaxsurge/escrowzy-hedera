@@ -41,6 +41,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { apiEndpoints } from '@/config/api-endpoints'
 import { appRoutes } from '@/config/app-routes'
+import { blockchainConfig } from '@/config/blockchain-config.generated'
 import { envPublic } from '@/config/env.public'
 import { useUnifiedChainInfo } from '@/context'
 import { useToast } from '@/hooks/use-toast'
@@ -75,7 +76,8 @@ export default function CreateDomainListingPage() {
       monthlyTraffic: '',
       monthlyRevenue: '',
       description: '',
-      paymentWindow: 30
+      paymentWindow: 30,
+      chainId: (chainId || DEFAULT_CHAIN_ID).toString()
     }
   })
 
@@ -423,6 +425,119 @@ export default function CreateDomainListingPage() {
                       </FormControl>
                       <FormDescription>
                         Help buyers understand the value
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Payment Configuration */}
+              <div className='space-y-4'>
+                <h3 className='text-lg font-semibold'>Payment Configuration</h3>
+
+                <div className='grid grid-cols-2 gap-4'>
+                  {/* Payment Token */}
+                  <FormField
+                    control={form.control}
+                    name='tokenOffered'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Accepted Payment Token</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Select token' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.keys(supportedTokens).map(token => (
+                              <SelectItem key={token} value={token}>
+                                {token}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Cryptocurrency you accept as payment
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Chain Selection */}
+                  <FormField
+                    control={form.control}
+                    name='chainId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Blockchain Network</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Select network' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.values(blockchainConfig.chains)
+                              .filter(chain => chain.chainId)
+                              .map(chain => (
+                                <SelectItem
+                                  key={chain.chainId}
+                                  value={chain.chainId.toString()}
+                                >
+                                  {chain.name}
+                                  {chain.isTestnet && (
+                                    <span className='text-muted-foreground ml-2 text-xs'>
+                                      (Testnet)
+                                    </span>
+                                  )}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          The blockchain network for payment
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Payment Window */}
+                <FormField
+                  control={form.control}
+                  name='paymentWindow'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Window</FormLabel>
+                      <Select
+                        onValueChange={value => field.onChange(parseInt(value))}
+                        value={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select payment window' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='30'>30 minutes</SelectItem>
+                          <SelectItem value='60'>1 hour</SelectItem>
+                          <SelectItem value='120'>2 hours</SelectItem>
+                          <SelectItem value='240'>4 hours</SelectItem>
+                          <SelectItem value='1440'>24 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Time limit for buyer to deposit funds after acceptance
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

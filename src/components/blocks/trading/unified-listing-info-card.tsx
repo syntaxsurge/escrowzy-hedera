@@ -5,10 +5,13 @@ import {
   ArrowRightLeft,
   Calendar,
   Trophy,
-  CreditCard
+  CreditCard,
+  Clock,
+  Globe2
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { getChainName } from '@/lib/config/chain-mappings'
 import type { DomainMetadata } from '@/types/listings'
 
 interface UnifiedListingInfoCardProps {
@@ -25,6 +28,8 @@ interface UnifiedListingInfoCardProps {
 
   // Common props
   listingCategory?: 'p2p' | 'domain'
+  chainId?: string | null
+  paymentWindow?: number | null
   className?: string
 }
 
@@ -37,9 +42,19 @@ export function UnifiedListingInfoCard({
   paymentMethods = [],
   domainMetadata,
   listingCategory = 'p2p',
+  chainId,
+  paymentWindow,
   className
 }: UnifiedListingInfoCardProps) {
   const isDomain = listingCategory === 'domain'
+
+  // Format payment window display
+  const formatPaymentWindow = (minutes: number | null | undefined) => {
+    if (!minutes) return 'Not specified'
+    if (minutes < 60) return `${minutes} minutes`
+    const hours = Math.floor(minutes / 60)
+    return hours === 1 ? '1 hour' : `${hours} hours`
+  }
 
   if (isDomain && domainMetadata) {
     // Domain listing design
@@ -134,6 +149,28 @@ export function UnifiedListingInfoCard({
                 </span>
               </div>
             )}
+
+            {/* Chain and Payment Window Row */}
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='rounded-lg bg-slate-100 px-3 py-2 dark:bg-black/20'>
+                <p className='text-muted-foreground mb-1 flex items-center text-xs font-medium tracking-wider uppercase'>
+                  <Globe2 className='mr-1 h-3 w-3' />
+                  Network
+                </p>
+                <p className='text-sm font-bold text-slate-900 dark:text-white'>
+                  {chainId ? getChainName(chainId) : 'Any Chain'}
+                </p>
+              </div>
+              <div className='rounded-lg bg-slate-100 px-3 py-2 dark:bg-black/20'>
+                <p className='text-muted-foreground mb-1 flex items-center text-xs font-medium tracking-wider uppercase'>
+                  <Clock className='mr-1 h-3 w-3' />
+                  Payment Time
+                </p>
+                <p className='text-sm font-bold text-slate-900 dark:text-white'>
+                  {formatPaymentWindow(paymentWindow)}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -221,6 +258,28 @@ export function UnifiedListingInfoCard({
               </div>
             </div>
           )}
+
+          {/* Chain and Payment Window */}
+          <div className='grid grid-cols-2 gap-4'>
+            <div className='rounded-lg bg-slate-100 px-3 py-2 dark:bg-black/20'>
+              <p className='text-muted-foreground mb-1 flex items-center text-xs font-medium tracking-wider uppercase'>
+                <Globe2 className='mr-1 h-3 w-3' />
+                Network
+              </p>
+              <p className='text-sm font-bold text-slate-900 dark:text-white'>
+                {chainId ? getChainName(chainId) : 'Any Chain'}
+              </p>
+            </div>
+            <div className='rounded-lg bg-slate-100 px-3 py-2 dark:bg-black/20'>
+              <p className='text-muted-foreground mb-1 flex items-center text-xs font-medium tracking-wider uppercase'>
+                <Clock className='mr-1 h-3 w-3' />
+                Payment Time
+              </p>
+              <p className='text-sm font-bold text-slate-900 dark:text-white'>
+                {formatPaymentWindow(paymentWindow)}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

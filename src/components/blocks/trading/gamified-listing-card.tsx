@@ -283,6 +283,8 @@ export function GamifiedListingCard({
             paymentMethods={paymentMethods}
             domainMetadata={domainMetadata}
             listingCategory={listing.listingCategory as 'p2p' | 'domain'}
+            chainId={listing.chainId}
+            paymentWindow={listing.paymentWindow}
           />
         </CardContent>
 

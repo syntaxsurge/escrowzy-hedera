@@ -27,8 +27,16 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { LoadingButton } from '@/components/ui/loading-button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { apiEndpoints } from '@/config/api-endpoints'
+import { blockchainConfig } from '@/config/blockchain-config.generated'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api/http-client'
 import {
@@ -75,7 +83,9 @@ export function UpdateListingDialog({
   const defaultValues = isDomainListing
     ? {
         amount: listing.amount ?? undefined,
-        isActive: listing.isActive
+        isActive: listing.isActive,
+        chainId: listing.chainId ?? undefined,
+        paymentWindow: listing.paymentWindow ?? 30
       }
     : {
         amount: listing.amount ?? undefined,
@@ -83,7 +93,9 @@ export function UpdateListingDialog({
         minAmount: listing.minAmount ?? '',
         maxAmount: listing.maxAmount ?? '',
         paymentMethods: existingPaymentMethods,
-        isActive: listing.isActive
+        isActive: listing.isActive,
+        chainId: listing.chainId ?? undefined,
+        paymentWindow: listing.paymentWindow ?? 15
       }
 
   const form = useForm<UpdateListingInput>({
@@ -122,7 +134,9 @@ export function UpdateListingDialog({
       const originalData = isDomainListing
         ? {
             amount: listing.amount ?? undefined,
-            isActive: listing.isActive
+            isActive: listing.isActive,
+            chainId: listing.chainId ?? undefined,
+            paymentWindow: listing.paymentWindow ?? 30
           }
         : {
             amount: listing.amount ?? undefined,
@@ -130,7 +144,9 @@ export function UpdateListingDialog({
             minAmount: listing.minAmount || '',
             maxAmount: listing.maxAmount || '',
             paymentMethods: existingPaymentMethods,
-            isActive: listing.isActive
+            isActive: listing.isActive,
+            chainId: listing.chainId ?? undefined,
+            paymentWindow: listing.paymentWindow ?? 15
           }
 
       if (!hasFormChanged(filteredData, originalData)) {
@@ -146,11 +162,15 @@ export function UpdateListingDialog({
       // Only send changed fields
       const changes: any = {}
 
-      // For domain listings, only update amount (price) and isActive
+      // For domain listings
       if (isDomainListing) {
         if (data.amount !== (listing.amount ?? undefined))
           changes.amount = data.amount
         if (data.isActive !== listing.isActive) changes.isActive = data.isActive
+        if (data.chainId !== (listing.chainId ?? undefined))
+          changes.chainId = data.chainId || null
+        if (data.paymentWindow !== (listing.paymentWindow ?? 30))
+          changes.paymentWindow = data.paymentWindow
       } else {
         // For P2P listings, update all relevant fields
         if (data.amount !== (listing.amount ?? undefined))
@@ -168,6 +188,10 @@ export function UpdateListingDialog({
           changes.paymentMethods = data.paymentMethods
         }
         if (data.isActive !== listing.isActive) changes.isActive = data.isActive
+        if (data.chainId !== (listing.chainId ?? undefined))
+          changes.chainId = data.chainId || null
+        if (data.paymentWindow !== (listing.paymentWindow ?? 15))
+          changes.paymentWindow = data.paymentWindow
       }
 
       const response = await api.put(
@@ -554,6 +578,86 @@ export function UpdateListingDialog({
                   )}
                 />
               )}
+
+              {/* Chain and Payment Window - For both P2P and Domain */}
+              <div className='grid grid-cols-2 gap-4'>
+                {/* Chain Selection */}
+                <FormField
+                  control={form.control}
+                  name='chainId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Blockchain Network</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || ''}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select network' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.values(blockchainConfig.chains)
+                            .filter(chain => chain.chainId)
+                            .map(chain => (
+                              <SelectItem
+                                key={chain.chainId}
+                                value={chain.chainId.toString()}
+                              >
+                                {chain.name}
+                                {chain.isTestnet && (
+                                  <span className='text-muted-foreground ml-2 text-xs'>
+                                    (Testnet)
+                                  </span>
+                                )}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        The blockchain network for this listing
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Payment Window */}
+                <FormField
+                  control={form.control}
+                  name='paymentWindow'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Window</FormLabel>
+                      <Select
+                        onValueChange={value => field.onChange(parseInt(value))}
+                        value={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select payment window' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='15'>15 minutes</SelectItem>
+                          <SelectItem value='30'>30 minutes</SelectItem>
+                          <SelectItem value='60'>1 hour</SelectItem>
+                          <SelectItem value='120'>2 hours</SelectItem>
+                          <SelectItem value='240'>4 hours</SelectItem>
+                          {isDomainListing && (
+                            <SelectItem value='1440'>24 hours</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Time limit for deposit after trade acceptance
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               {/* Submit Buttons */}
               <div className='flex justify-between pt-4'>
