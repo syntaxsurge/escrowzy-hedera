@@ -55,6 +55,8 @@ export const GET = withSubscriptionValidation(
             nativeCurrencySymbol: contractInfo.nativeCurrency,
             isTeamPlan: plan.isTeamPlan,
             feeTierBasisPoints: plan.feeTierBasisPoints
+              ? Number(plan.feeTierBasisPoints)
+              : undefined
           }
         })
     )

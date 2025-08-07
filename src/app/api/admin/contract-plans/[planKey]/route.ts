@@ -56,6 +56,12 @@ export async function GET(
     const priceUSD = await convertWeiToUSD(plan.priceWei, chainId)
     const planWithUSDPrice = {
       ...plan,
+      priceWei: plan.priceWei.toString(), // Convert BigInt to string
+      maxMembers: plan.maxMembers.toString(), // Convert BigInt to string
+      sortOrder: plan.sortOrder.toString(), // Convert BigInt to string
+      feeTierBasisPoints: plan.feeTierBasisPoints
+        ? plan.feeTierBasisPoints.toString()
+        : undefined, // Convert BigInt to string
       priceUSD,
       priceFormatted: formatCurrency(priceUSD, { currency: 'USD' }),
       maxMembersFormatted:
