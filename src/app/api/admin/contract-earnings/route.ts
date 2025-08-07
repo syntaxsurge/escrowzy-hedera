@@ -1,6 +1,5 @@
-import { ethers } from 'ethers'
-
 import { getNativeCurrencySymbol } from '@/lib/blockchain'
+import { formatNativeAmount } from '@/lib/utils/token-helpers'
 import { withContractValidation } from '@/services/blockchain/contract-validation'
 
 // GET /api/admin/contract-earnings - Get earnings summary from smart contract
@@ -31,16 +30,23 @@ export const GET = withContractValidation(
       withdrawnUSD: withdrawnUSD,
       availableUSD: availableUSD,
       // Native currency values for display
-      totalNative: ethers.formatEther(earningsSummary.totalNativeEarnings),
-      withdrawnNative: ethers.formatEther(earningsSummary.totalNativeWithdrawn),
-      availableNative: ethers.formatEther(
-        earningsSummary.availableNativeEarnings
+      totalNative: formatNativeAmount(
+        earningsSummary.totalNativeEarnings,
+        chainId
+      ),
+      withdrawnNative: formatNativeAmount(
+        earningsSummary.totalNativeWithdrawn,
+        chainId
+      ),
+      availableNative: formatNativeAmount(
+        earningsSummary.availableNativeEarnings,
+        chainId
       ),
       nativeCurrency: nativeCurrency,
       // Formatted display values
-      totalFormatted: `$${totalUSD.toFixed(2)} (${ethers.formatEther(earningsSummary.totalNativeEarnings)} ${nativeCurrency})`,
-      withdrawnFormatted: `$${withdrawnUSD.toFixed(2)} (${ethers.formatEther(earningsSummary.totalNativeWithdrawn)} ${nativeCurrency})`,
-      availableFormatted: `$${availableUSD.toFixed(2)} (${ethers.formatEther(earningsSummary.availableNativeEarnings)} ${nativeCurrency})`
+      totalFormatted: `$${totalUSD.toFixed(2)} (${formatNativeAmount(earningsSummary.totalNativeEarnings, chainId)} ${nativeCurrency})`,
+      withdrawnFormatted: `$${withdrawnUSD.toFixed(2)} (${formatNativeAmount(earningsSummary.totalNativeWithdrawn, chainId)} ${nativeCurrency})`,
+      availableFormatted: `$${availableUSD.toFixed(2)} (${formatNativeAmount(earningsSummary.availableNativeEarnings, chainId)} ${nativeCurrency})`
     }
 
     return {

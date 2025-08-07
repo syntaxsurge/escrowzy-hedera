@@ -1,5 +1,6 @@
 import { ethers } from 'ethers'
 
+import { formatNativeAmount } from '@/lib/utils/token-helpers'
 import { withContractValidation } from '@/services/blockchain/contract-validation'
 
 // GET /api/admin/contract-plans - Get all plans from smart contract
@@ -30,7 +31,9 @@ export const GET = withContractValidation(async ({ contractService }) => {
       priceFormatted: await contractService.formatPriceForDisplay(
         plan.priceWei
       ),
-      priceNative: Number(ethers.formatEther(plan.priceWei)),
+      priceNative: Number(
+        formatNativeAmount(plan.priceWei, contractInfo.chainId)
+      ),
       maxMembers: plan.maxMembers, // This will be serialized below
       maxMembersFormatted:
         plan.maxMembers === ethers.MaxUint256

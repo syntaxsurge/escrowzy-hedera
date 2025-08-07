@@ -15,7 +15,6 @@ import {
   useActiveWalletChain,
   useDisconnect as useThirdwebDisconnect
 } from 'thirdweb/react'
-import { formatUnits } from 'viem'
 import {
   useAccount,
   useBalance,
@@ -29,6 +28,7 @@ import {
 import { getWalletProvider, WalletProviders } from '@/config/wallet-provider'
 import { getChainConfig, getNativeCurrencySymbol } from '@/lib/blockchain'
 import { thirdwebClient } from '@/lib/blockchain/thirdweb-client'
+import { formatNativeAmount } from '@/lib/utils/token-helpers'
 
 interface TransactionRequest {
   to: `0x${string}`
@@ -139,8 +139,14 @@ function ThirdwebBlockchainProvider({ children }: { children: ReactNode }) {
           client: thirdwebClient
         })
 
-        const decimals = 18 // Native tokens typically have 18 decimals
-        const formatted = formatUnits(balance.value, decimals)
+        const decimals = chainId
+          ? (await import('@/lib/blockchain')).getNativeCurrencyDecimals(
+              chainId
+            )
+          : 18
+        const formatted = chainId
+          ? formatNativeAmount(balance.value, chainId)
+          : (balance.value / 10n ** 18n).toString()
 
         setNativeBalance({
           value: balance.value,
@@ -304,9 +310,10 @@ function WagmiBlockchainProvider({ children }: { children: ReactNode }) {
     address: wagmiAccount?.address,
     isConnected: wagmiAccount?.isConnected || false,
     balance: balanceData,
-    formattedBalance: balanceData
-      ? `${formatUnits(balanceData.value, balanceData.decimals)} ${balanceData.symbol}`
-      : `0 ${nativeCurrencySymbol}`,
+    formattedBalance:
+      balanceData && wagmiChainId
+        ? `${formatNativeAmount(balanceData.value, wagmiChainId)} ${balanceData.symbol}`
+        : `0 ${nativeCurrencySymbol}`,
     disconnect: wagmiDisconnect,
     chainId: wagmiChainId,
     signMessage: async (message: string) => {
@@ -333,7 +340,9 @@ function WagmiBlockchainProvider({ children }: { children: ReactNode }) {
           value: balanceData.value,
           decimals: balanceData.decimals,
           symbol: balanceData.symbol,
-          formatted: formatUnits(balanceData.value, balanceData.decimals)
+          formatted: wagmiChainId
+            ? formatNativeAmount(balanceData.value, wagmiChainId)
+            : '0'
         }
       : undefined
   }

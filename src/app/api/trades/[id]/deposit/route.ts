@@ -7,7 +7,7 @@ import { depositToEscrow } from '@/services/trade'
 
 const depositSchema = z.object({
   transactionHash: z.string().min(1, 'Transaction hash is required'),
-  escrowId: z.number().int().positive('Valid escrow ID required')
+  escrowId: z.number().int().min(0, 'Valid escrow ID required') // Allow escrowId 0
 })
 
 export async function POST(

@@ -102,7 +102,6 @@ export function TradeActionDialog({
     createEscrow,
     fundEscrow,
     confirmDelivery,
-    calculateFee,
     isLoading: isBlockchainLoading
   } = useEscrow()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -125,17 +124,11 @@ export function TradeActionDialog({
   // Calculate fee when dialog opens or trade amount changes
   useEffect(() => {
     if (open && trade.amount) {
-      calculateFee(trade.amount, address)
-        .then(fee => {
-          setCalculatedFee(fee)
-        })
-        .catch(() => {
-          // Fallback to default calculation if async fails
-          const defaultFee = (parseFloat(trade.amount) * 0.025).toFixed(6)
-          setCalculatedFee(defaultFee)
-        })
+      // Calculate fee as 2.5% of the amount
+      const defaultFee = (parseFloat(trade.amount) * 0.025).toFixed(6)
+      setCalculatedFee(defaultFee)
     }
-  }, [open, trade.amount, address, calculateFee])
+  }, [open, trade.amount])
 
   // Reset native conversion state when dialog closes
   useEffect(() => {

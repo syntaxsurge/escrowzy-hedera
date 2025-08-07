@@ -1,6 +1,6 @@
 import 'server-only'
 import { eq, and, sql } from 'drizzle-orm'
-import { createPublicClient, http, parseUnits, decodeEventLog } from 'viem'
+import { createPublicClient, http, decodeEventLog } from 'viem'
 
 import { timeConstants } from '@/config/app-routes'
 import { getCryptoPrice } from '@/lib/api/coingecko'
@@ -8,7 +8,6 @@ import {
   getSubscriptionManagerAddress,
   getCoingeckoPriceId,
   getNativeCurrencySymbol,
-  getNativeCurrencyDecimals,
   getChainNickname,
   getViemChain,
   getSupportedChainIds,
@@ -17,6 +16,10 @@ import {
 } from '@/lib/blockchain'
 import { db } from '@/lib/db/drizzle'
 import { teams, paymentHistory } from '@/lib/db/schema'
+import {
+  parseNativeAmount,
+  formatNativeAmount
+} from '@/lib/utils/token-helpers'
 import {
   updatePersonalSubscription,
   getUserPersonalSubscription
@@ -82,8 +85,7 @@ export async function createPaymentIntent(
     // Get current crypto price for display purposes
     cryptoPrice = await getCryptoPrice(network.coingeckoId)
     // Calculate the crypto amount for display
-    const decimals = getNativeCurrencyDecimals(networkId)
-    amount = (Number(amountWei) / Math.pow(10, decimals)).toFixed(decimals)
+    amount = formatNativeAmount(amountWei, networkId)
   } else {
     // Fallback to USD conversion if priceWei is not provided
     const usdPrice = parseFloat(planDetails.price)
@@ -96,7 +98,7 @@ export async function createPaymentIntent(
 
     // Calculate amount needed in native currency
     amount = (usdPrice / cryptoPrice).toString()
-    amountWei = parseUnits(amount, getNativeCurrencyDecimals(networkId))
+    amountWei = parseNativeAmount(amount, networkId)
   }
 
   // Generate unique payment ID for tracking concurrent payments

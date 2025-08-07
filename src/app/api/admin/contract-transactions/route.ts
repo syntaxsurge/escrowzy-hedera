@@ -5,6 +5,7 @@ import { ethers } from 'ethers'
 import { apiResponses } from '@/lib/api/server-utils'
 import { getSession } from '@/lib/auth/session'
 import { isSupportedChainId } from '@/lib/blockchain'
+import { parseNativeAmount } from '@/lib/utils/token-helpers'
 import {
   createContractPlanService,
   type CreatePlanParams
@@ -253,8 +254,8 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        // Convert native amount to wei
-        const amountWei = ethers.parseEther(amountNative.toString())
+        // Convert native amount to smallest unit using chain-specific decimals
+        const amountWei = parseNativeAmount(amountNative.toString(), chainId)
 
         // Prepare transaction data
         const iface = new ethers.Interface(contractInfo.abi)

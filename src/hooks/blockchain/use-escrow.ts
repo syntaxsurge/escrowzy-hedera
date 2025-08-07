@@ -2,11 +2,12 @@
 
 import { useState, useCallback } from 'react'
 
-import { parseEther, formatEther, decodeEventLog } from 'viem'
+import { decodeEventLog } from 'viem'
 
 import { useBlockchain } from '@/context'
 import { useToast } from '@/hooks/use-toast'
 import { getEscrowCoreAddress, ESCROW_CORE_ABI } from '@/lib/blockchain'
+import { calculateEscrowAmounts } from '@/lib/utils/token-helpers'
 
 import { useTransaction } from './use-transaction'
 import type { TransactionConfig } from './use-transaction'
@@ -124,12 +125,19 @@ export function useEscrow() {
       }
 
       try {
-        const amountInWei = parseEther(params.amount)
+        // Get fee percentage based on user's tier
+        const feePercentage = await calculateFeePercentage(params.seller)
 
-        // Calculate fee based on user's tier
-        const feeStr = await calculateFee(params.amount, params.seller)
-        const feeAmount = parseEther(feeStr)
-        const totalAmount = amountInWei + feeAmount
+        // Calculate all amounts with proper decimal handling for each chain
+        const amounts = calculateEscrowAmounts(
+          params.amount,
+          feePercentage,
+          selectedChainId
+        )
+
+        // Use contract amount for function args, transaction value for msg.value
+        const amountForContract = amounts.baseAmount.contractAmount
+        const totalValue = amounts.totalAmount.transactionValue
 
         const disputeWindow = params.disputeWindow || 7 * 24 * 60 * 60 // 7 days default
 
@@ -146,13 +154,13 @@ export function useEscrow() {
             functionName: 'createEscrowWithTemplate',
             args: [
               params.seller,
-              amountInWei,
+              amountForContract,
               disputeWindow,
               params.metadata || '',
               params.templateId || '',
               params.approvers || []
             ],
-            value: params.autoFund ? totalAmount : 0n,
+            value: params.autoFund ? totalValue : 0n,
             chainId: selectedChainId
           }
         } else {
@@ -163,11 +171,11 @@ export function useEscrow() {
             functionName: 'createEscrow',
             args: [
               params.seller,
-              amountInWei,
+              amountForContract,
               disputeWindow,
               params.metadata || ''
             ],
-            value: params.autoFund ? totalAmount : 0n,
+            value: params.autoFund ? totalValue : 0n,
             chainId: selectedChainId
           }
         }
@@ -178,9 +186,6 @@ export function useEscrow() {
         let escrowId: number | null = null
         if (hash) {
           escrowId = await getEscrowIdFromReceipt(hash, selectedChainId)
-          if (escrowId !== null) {
-            console.log('Escrow created with ID:', escrowId)
-          }
         }
 
         return { txHash: hash, escrowId }
@@ -204,18 +209,25 @@ export function useEscrow() {
       }
 
       try {
-        const amountInWei = parseEther(amount)
+        // Get fee percentage (default 2.5%)
+        const feePercentage = 0.025
 
-        // Calculate fee (2.5% default)
-        const feeAmount = (amountInWei * 250n) / 10000n
-        const totalAmount = amountInWei + feeAmount
+        // Calculate amounts with proper decimal handling for each chain
+        const amounts = calculateEscrowAmounts(
+          amount,
+          feePercentage,
+          selectedChainId
+        )
+
+        // Use transaction value for msg.value
+        const totalValue = amounts.totalAmount.transactionValue
 
         const config: TransactionConfig = {
           address: escrowAddress as `0x${string}`,
           abi: ESCROW_CORE_ABI,
           functionName: 'fundEscrow',
           args: [escrowId],
-          value: totalAmount,
+          value: totalValue,
           chainId: selectedChainId
         }
 
@@ -435,10 +447,11 @@ export function useEscrow() {
     [escrowAddress, selectedChainId, executeTransaction, toast]
   )
 
-  const calculateFee = useCallback(
-    async (amount: string, userAddress?: string): Promise<string> => {
+  const calculateFeePercentage = useCallback(
+    async (userAddress?: string): Promise<number> => {
       try {
-        const amountInWei = parseEther(amount)
+        // Default fee percentage
+        let feePercentage = 0.025 // Default 2.5%
 
         // Get user's subscription tier if address provided
         if (userAddress && escrowAddress) {
@@ -457,24 +470,18 @@ export function useEscrow() {
               })
 
               // Apply tiered fee percentage
-              let feePercentage = 250n // Default 2.5%
               if (tier === 2)
-                feePercentage = 150n // Enterprise 1.5%
-              else if (tier === 1) feePercentage = 200n // Pro 2.0%
-
-              const feeAmount = (amountInWei * feePercentage) / 10000n
-              return formatEther(feeAmount)
+                feePercentage = 0.015 // Enterprise 1.5%
+              else if (tier === 1) feePercentage = 0.02 // Pro 2.0%
             }
           } catch (error) {
             console.error('Error getting user tier:', error)
           }
         }
 
-        // Default fee calculation
-        const feeAmount = (amountInWei * 250n) / 10000n // 2.5%
-        return formatEther(feeAmount)
+        return feePercentage
       } catch {
-        return '0'
+        return 0.025 // Default 2.5%
       }
     },
     [escrowAddress, selectedChainId]
@@ -494,18 +501,21 @@ export function useEscrow() {
       try {
         // Calculate total value needed
         let totalValue = 0n
-        const amountsInWei: bigint[] = []
+        const amountsForContract: bigint[] = []
 
         for (let i = 0; i < params.amounts.length; i++) {
-          const amountInWei = parseEther(params.amounts[i])
-          const feeStr = await calculateFee(
-            params.amounts[i],
-            params.sellers[i]
-          )
-          const feeAmount = parseEther(feeStr)
+          // Get fee percentage based on seller's tier
+          const feePercentage = await calculateFeePercentage(params.sellers[i])
 
-          amountsInWei.push(amountInWei)
-          totalValue += amountInWei + feeAmount
+          // Calculate amounts with proper decimal handling for each chain
+          const amounts = calculateEscrowAmounts(
+            params.amounts[i],
+            feePercentage,
+            selectedChainId
+          )
+
+          amountsForContract.push(amounts.baseAmount.contractAmount)
+          totalValue += amounts.totalAmount.transactionValue
         }
 
         const config: TransactionConfig = {
@@ -514,7 +524,7 @@ export function useEscrow() {
           functionName: 'batchCreateEscrows',
           args: [
             params.sellers,
-            amountsInWei,
+            amountsForContract,
             params.disputeWindows || params.sellers.map(() => 7 * 24 * 60 * 60),
             params.metadatas || params.sellers.map(() => '')
           ],
@@ -550,7 +560,13 @@ export function useEscrow() {
         throw error
       }
     },
-    [escrowAddress, selectedChainId, executeTransaction, toast, calculateFee]
+    [
+      escrowAddress,
+      selectedChainId,
+      executeTransaction,
+      toast,
+      calculateFeePercentage
+    ]
   )
 
   const approveEscrow = useCallback(
@@ -613,7 +629,6 @@ export function useEscrow() {
     markDelivered,
     cancelEscrow,
     approveEscrow,
-    calculateFee,
     isLoading: isExecuting,
     escrowDetails
   }

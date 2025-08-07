@@ -10,6 +10,12 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
  * @dev Core escrow contract for secure P2P trading with dispute resolution
  */
 contract EscrowCore is AccessControl, ReentrancyGuard, Pausable {
+    // Custom errors for better gas efficiency and debugging
+    error IncorrectPaymentAmount(uint256 received, uint256 expected);
+    error InvalidStatus(Status current, Status expected);
+    error Unauthorized();
+    error EscrowNotFound();
+    error TransferFailed();
     // Roles
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant ARBITRATOR_ROLE = keccak256("ARBITRATOR_ROLE");
@@ -178,7 +184,9 @@ contract EscrowCore is AccessControl, ReentrancyGuard, Pausable {
     }
 
     modifier inStatus(uint256 _escrowId, Status _status) {
-        require(escrows[_escrowId].status == _status, "Invalid escrow status");
+        if (escrows[_escrowId].status != _status) {
+            revert InvalidStatus(escrows[_escrowId].status, _status);
+        }
         _;
     }
 
@@ -254,7 +262,9 @@ contract EscrowCore is AccessControl, ReentrancyGuard, Pausable {
         
         // Check if correct amount is sent (optional: can be funded later)
         if (msg.value > 0) {
-            require(msg.value == totalRequired, "Incorrect payment amount");
+            if (msg.value != totalRequired) {
+                revert IncorrectPaymentAmount(msg.value, totalRequired);
+            }
         }
 
         escrowId = nextEscrowId++;
@@ -319,7 +329,9 @@ contract EscrowCore is AccessControl, ReentrancyGuard, Pausable {
         Escrow storage escrow = escrows[_escrowId];
         uint256 totalRequired = escrow.amount + escrow.fee;
         
-        require(msg.value == totalRequired, "Incorrect payment amount");
+        if (msg.value != totalRequired) {
+            revert IncorrectPaymentAmount(msg.value, totalRequired);
+        }
         
         escrow.status = Status.FUNDED;
         escrow.fundedAt = block.timestamp;

@@ -1,7 +1,6 @@
 import { format } from 'date-fns'
-import { formatUnits } from 'viem'
 
-import { getNativeCurrencyDecimals } from '.'
+import { formatNativeAmount } from '@/lib/utils/token-helpers'
 
 /**
  * Format a payment amount for display
@@ -22,9 +21,8 @@ export function formatPaymentAmount(
     // Already in native currency units (e.g., ETH)
     return parseFloat(amount).toFixed(decimals)
   } else {
-    // Amount is in Wei, convert to native currency units
-    const chainDecimals = getNativeCurrencyDecimals(chainId)
-    const formattedAmount = formatUnits(BigInt(amount), chainDecimals)
+    // Amount is in smallest units (Wei, tinybar, etc), convert to native currency units
+    const formattedAmount = formatNativeAmount(BigInt(amount), chainId)
     // Format to specified decimal places for display
     return parseFloat(formattedAmount).toFixed(decimals)
   }

@@ -1,6 +1,8 @@
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'thirdweb'
+import { parseUnits, formatUnits } from 'viem'
 
 import { okxDexClient } from '@/lib/api/okx-dex-client'
+import { getNativeCurrencyDecimals } from '@/lib/blockchain'
 
 /**
  * Helper function to get token decimals from OKX or use defaults
@@ -13,14 +15,16 @@ export async function getTokenDecimals(
   chainId: string
 ): Promise<number> {
   try {
-    // Native token (ETH, BNB, MATIC, etc.) always has 18 decimals
+    // Native token - use chain-specific decimals
     if (
       !tokenAddress ||
       tokenAddress === '0x0' ||
       tokenAddress.toLowerCase() === ZERO_ADDRESS ||
       tokenAddress.toLowerCase() === NATIVE_TOKEN_ADDRESS
     ) {
-      return 18
+      const chainIdNum =
+        typeof chainId === 'string' ? parseInt(chainId) : chainId
+      return getNativeCurrencyDecimals(chainIdNum)
     }
 
     // Special cases for known stablecoins with 6 decimals
@@ -56,7 +60,7 @@ export async function getTokenDecimals(
     return 18
   } catch (error) {
     console.error('Error fetching token decimals:', error)
-    return 18 // Default fallback
+    return 18 // Default fallback for ERC20 tokens
   }
 }
 
@@ -148,4 +152,107 @@ export async function getCachedTokenDecimals(
   tokenInfoCache.set(cacheKey, { decimals, timestamp: Date.now() })
 
   return decimals
+}
+
+/**
+ * Parse a human-readable native currency amount to its smallest unit (wei, tinybar, etc.)
+ * Handles chain-specific decimals automatically
+ *
+ * @param amount - The amount as a string (e.g., "1.5")
+ * @param chainId - The chain ID to determine correct decimals
+ * @returns The amount in smallest units as bigint
+ */
+export function parseNativeAmount(amount: string, chainId: number): bigint {
+  const decimals = getNativeCurrencyDecimals(chainId)
+  return parseUnits(amount, decimals)
+}
+
+/**
+ * Format native currency amount from smallest unit to human-readable format
+ * Handles chain-specific decimals automatically
+ *
+ * @param amount - The amount in smallest units as bigint
+ * @param chainId - The chain ID to determine correct decimals
+ * @returns The amount as a human-readable string
+ */
+export function formatNativeAmount(amount: bigint, chainId: number): string {
+  const decimals = getNativeCurrencyDecimals(chainId)
+  return formatUnits(amount, decimals)
+}
+
+/**
+ * Check if the chain is Hedera (Testnet or Mainnet)
+ * Hedera requires special handling due to its JSON-RPC relay converting decimals
+ *
+ * @param chainId - The chain ID to check
+ * @returns True if the chain is Hedera
+ */
+export function isHederaChain(chainId: number): boolean {
+  return chainId === 296 || chainId === 295 // Hedera Testnet or Mainnet
+}
+
+/**
+ * Get escrow amounts for both contract arguments and transaction value
+ * Handles Hedera's special case where JSON-RPC converts msg.value from 18 to 8 decimals
+ * but doesn't convert function arguments
+ *
+ * @param amount - The amount as a string (e.g., "100.5")
+ * @param chainId - The chain ID
+ * @returns Object with contractAmount (for function args) and transactionValue (for msg.value)
+ */
+export function getEscrowAmounts(
+  amount: string,
+  chainId: number
+): { contractAmount: bigint; transactionValue: bigint } {
+  if (isHederaChain(chainId)) {
+    // For Hedera:
+    // - Contract arguments need 8 decimals (native Hedera format)
+    // - Transaction value needs 18 decimals (will be converted by JSON-RPC to 8)
+    return {
+      contractAmount: parseUnits(amount, 8),
+      transactionValue: parseUnits(amount, 18)
+    }
+  }
+
+  // For all other chains, use native decimals for both
+  const nativeAmount = parseNativeAmount(amount, chainId)
+  return {
+    contractAmount: nativeAmount,
+    transactionValue: nativeAmount
+  }
+}
+
+/**
+ * Calculate escrow fee and return amounts for contract and transaction
+ * Handles chain-specific decimal conversions
+ *
+ * @param amount - The base amount as a string
+ * @param feePercentage - The fee percentage (e.g., 0.025 for 2.5%)
+ * @param chainId - The chain ID
+ * @returns Object with fee amounts and totals for both contract and transaction
+ */
+export function calculateEscrowAmounts(
+  amount: string,
+  feePercentage: number,
+  chainId: number
+): {
+  baseAmount: { contractAmount: bigint; transactionValue: bigint }
+  feeAmount: { contractAmount: bigint; transactionValue: bigint }
+  totalAmount: { contractAmount: bigint; transactionValue: bigint }
+} {
+  // Calculate fee as a string
+  const amountAsNumber = parseFloat(amount)
+  const feeAsNumber = amountAsNumber * feePercentage
+  const totalAsNumber = amountAsNumber + feeAsNumber
+
+  // Get amounts for base, fee, and total
+  const base = getEscrowAmounts(amount, chainId)
+  const fee = getEscrowAmounts(feeAsNumber.toString(), chainId)
+  const total = getEscrowAmounts(totalAsNumber.toString(), chainId)
+
+  return {
+    baseAmount: base,
+    feeAmount: fee,
+    totalAmount: total
+  }
 }

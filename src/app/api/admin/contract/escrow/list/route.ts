@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { createPublicClient, http, formatEther } from 'viem'
+import { createPublicClient, http } from 'viem'
 
 import { withAdminAuth } from '@/lib/api/auth-middleware'
 import {
@@ -8,6 +8,7 @@ import {
   getViemChain,
   ESCROW_CORE_ABI
 } from '@/lib/blockchain'
+import { formatNativeAmount } from '@/lib/utils/token-helpers'
 
 // Escrow Status Enum
 const EscrowStatus = {
@@ -105,8 +106,8 @@ async function handler(
         escrowId: Number(escrowIds[index]),
         buyer: d[0],
         seller: d[1],
-        amount: formatEther(d[2]),
-        fee: formatEther(d[3]),
+        amount: formatNativeAmount(d[2], chainId),
+        fee: formatNativeAmount(d[3], chainId),
         status: EscrowStatus[d[4] as keyof typeof EscrowStatus],
         statusCode: d[4],
         createdAt: new Date(Number(d[5]) * 1000).toISOString(),

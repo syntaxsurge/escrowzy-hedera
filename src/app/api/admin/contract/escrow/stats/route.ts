@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { createPublicClient, http, formatEther } from 'viem'
+import { createPublicClient, http } from 'viem'
 
 import { withAdminAuth } from '@/lib/api/auth-middleware'
 import {
@@ -10,6 +10,7 @@ import {
   getSupportedChainIds,
   getChainConfig
 } from '@/lib/blockchain'
+import { formatNativeAmount } from '@/lib/utils/token-helpers'
 
 async function handler(
   req: NextRequest,
@@ -98,9 +99,12 @@ async function handler(
       bigint,
       bigint
     ]
-    const totalVolume = formatEther(escrowStats[4])
-    const totalFeesCollected = formatEther(escrowStats[5])
-    const availableFeesFormatted = formatEther(availableFees as bigint)
+    const totalVolume = formatNativeAmount(escrowStats[4], chainId)
+    const totalFeesCollected = formatNativeAmount(escrowStats[5], chainId)
+    const availableFeesFormatted = formatNativeAmount(
+      availableFees as bigint,
+      chainId
+    )
 
     // Calculate average values
     const totalEscrows = Number(escrowStats[0])

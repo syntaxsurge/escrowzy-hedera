@@ -11,6 +11,10 @@ import {
   getChainNickname,
   SUBSCRIPTION_MANAGER_ABI
 } from '@/lib/blockchain'
+import {
+  parseNativeAmount,
+  formatNativeAmount
+} from '@/lib/utils/token-helpers'
 
 interface ContractPlan {
   planKey: number
@@ -104,8 +108,8 @@ export class ContractPlanService {
       })
 
       const nativeAmount = usdAmount / nativePrice
-      // Convert to wei (18 decimals)
-      return ethers.parseEther(nativeAmount.toFixed(18))
+      // Convert to smallest unit using chain-specific decimals
+      return parseNativeAmount(nativeAmount.toString(), this.chainId)
     } catch (error) {
       // Re-throw the error instead of using fallback prices
       throw new Error(
@@ -326,7 +330,7 @@ export class ContractPlanService {
         revalidate: 60 // Cache for 1 minute
       })
 
-      const nativeAmount = Number(ethers.formatEther(weiAmount))
+      const nativeAmount = Number(formatNativeAmount(weiAmount, this.chainId))
       return nativeAmount * nativePrice
     } catch (error) {
       throw new Error(

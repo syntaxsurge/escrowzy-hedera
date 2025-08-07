@@ -29,10 +29,12 @@ export async function POST(request: NextRequest) {
     // Convert USD to native currency
     const usdValue = parseFloat(usdAmount)
     const nativeAmount = usdValue / nativePrice
-    const decimals = getNativeCurrencyDecimals(chainId)
 
-    // Format with appropriate decimals
-    const formattedAmount = nativeAmount.toFixed(decimals)
+    // Get chain-specific decimals for proper formatting
+    const decimals = getNativeCurrencyDecimals(chainId)
+    // Use half the decimals for display (e.g., 9 for 18-decimal chains, 4 for 8-decimal chains)
+    const displayDecimals = Math.ceil(decimals / 2)
+    const formattedAmount = nativeAmount.toFixed(displayDecimals)
 
     return NextResponse.json({
       success: true,
