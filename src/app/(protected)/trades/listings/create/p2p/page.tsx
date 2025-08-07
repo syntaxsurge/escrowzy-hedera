@@ -594,90 +594,95 @@ export default function CreateP2PListingPage() {
                 />
               </div>
 
-              {/* Payment Window */}
-              <FormField
-                control={form.control}
-                name='paymentWindow'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Window</FormLabel>
-                    <Select
-                      onValueChange={value => field.onChange(parseInt(value))}
-                      value={field.value?.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Select payment window' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='15'>15 minutes</SelectItem>
-                        <SelectItem value='30'>30 minutes</SelectItem>
-                        <SelectItem value='60'>1 hour</SelectItem>
-                        <SelectItem value='120'>2 hours</SelectItem>
-                        <SelectItem value='240'>4 hours</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Time limit for deposit after trade acceptance
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Payment Configuration Section */}
+              <div className='space-y-4'>
+                <h3 className='text-lg font-semibold'>Payment Configuration</h3>
 
-              {/* Payment Methods */}
-              <FormField
-                control={form.control}
-                name='paymentMethods'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Accepted Payment Methods</FormLabel>
-                    <FormDescription>
-                      Select the payment methods you accept
-                    </FormDescription>
-                    <div className='mt-4 grid gap-4 md:grid-cols-2'>
-                      {Object.entries(PAYMENT_METHODS).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className='flex items-center space-x-2 rounded-lg border p-3'
-                        >
-                          <Checkbox
-                            id={key}
-                            checked={field.value?.includes(value)}
-                            onCheckedChange={(
-                              checked: boolean | 'indeterminate'
-                            ) => {
-                              const current = field.value || []
-                              if (checked === true) {
-                                field.onChange([...current, value])
-                              } else if (checked === false) {
-                                field.onChange(
-                                  current.filter((v: string) => v !== value)
-                                )
-                              }
-                            }}
-                          />
-                          <Label
-                            htmlFor={key}
-                            className='cursor-pointer text-sm font-normal'
+                {/* Payment Window */}
+                <FormField
+                  control={form.control}
+                  name='paymentWindow'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Window</FormLabel>
+                      <Select
+                        onValueChange={value => field.onChange(parseInt(value))}
+                        value={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select payment window' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='15'>15 minutes</SelectItem>
+                          <SelectItem value='30'>30 minutes</SelectItem>
+                          <SelectItem value='60'>1 hour</SelectItem>
+                          <SelectItem value='120'>2 hours</SelectItem>
+                          <SelectItem value='240'>4 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Time limit for deposit after trade acceptance
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Payment Methods */}
+                <FormField
+                  control={form.control}
+                  name='paymentMethods'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Accepted Payment Methods</FormLabel>
+                      <FormDescription>
+                        Select the payment methods you accept
+                      </FormDescription>
+                      <div className='mt-4 grid gap-4 md:grid-cols-2'>
+                        {Object.entries(PAYMENT_METHODS).map(([key, value]) => (
+                          <div
+                            key={key}
+                            className='flex items-center space-x-2 rounded-lg border p-3'
                           >
-                            {key
-                              .split('_')
-                              .map(
-                                word =>
-                                  word.charAt(0).toUpperCase() +
-                                  word.slice(1).toLowerCase()
-                              )
-                              .join(' ')}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                            <Checkbox
+                              id={key}
+                              checked={field.value?.includes(value)}
+                              onCheckedChange={(
+                                checked: boolean | 'indeterminate'
+                              ) => {
+                                const current = field.value || []
+                                if (checked === true) {
+                                  field.onChange([...current, value])
+                                } else if (checked === false) {
+                                  field.onChange(
+                                    current.filter((v: string) => v !== value)
+                                  )
+                                }
+                              }}
+                            />
+                            <Label
+                              htmlFor={key}
+                              className='cursor-pointer text-sm font-normal'
+                            >
+                              {key
+                                .split('_')
+                                .map(
+                                  word =>
+                                    word.charAt(0).toUpperCase() +
+                                    word.slice(1).toLowerCase()
+                                )
+                                .join(' ')}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               {/* Submit Buttons */}
               <div className='border-primary/30 from-primary/10 relative rounded-xl border-2 bg-gradient-to-br to-purple-600/10 p-6'>
