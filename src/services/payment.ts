@@ -18,7 +18,7 @@ import { teams, paymentHistory } from '@/lib/db/schema'
 import {
   parseNativeAmount,
   formatNativeAmount,
-  isHederaChain
+  normalizeTransactionValue
 } from '@/lib/utils/token-helpers'
 import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 import {
@@ -252,21 +252,15 @@ export async function verifyAndConfirmPayment(
     }
 
     // Verify the transaction value matches the expected amount
-    // For Hedera, transaction.value comes in 18 decimals but we expect 8 decimals
-    let normalizedTransactionValue = transaction.value.toString()
-    let normalizedExpectedAmount = amount
+    const { normalizedTxValue, normalizedExpected } = normalizeTransactionValue(
+      transaction.value,
+      amount,
+      networkId
+    )
 
-    if (isHederaChain(networkId)) {
-      // Convert transaction value from 18 decimals to 8 decimals for Hedera
-      // by dividing by 10^10
-      const txValueBigInt = BigInt(transaction.value)
-      const divisor = BigInt(10 ** 10)
-      normalizedTransactionValue = (txValueBigInt / divisor).toString()
-    }
-
-    if (normalizedTransactionValue !== normalizedExpectedAmount) {
+    if (normalizedTxValue !== normalizedExpected) {
       throw new Error(
-        `Amount mismatch: paid ${normalizedTransactionValue} but expected ${normalizedExpectedAmount}`
+        `Amount mismatch: paid ${normalizedTxValue} but expected ${normalizedExpected}`
       )
     }
 

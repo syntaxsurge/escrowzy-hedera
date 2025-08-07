@@ -326,6 +326,45 @@ export function getSubscriptionAmount(amount: string, chainId: number): bigint {
 }
 
 /**
+ * Normalize transaction value for comparison
+ * Handles Hedera's special case where JSON-RPC returns 18 decimals but native uses 8
+ *
+ * @param transactionValue - The transaction value from blockchain
+ * @param expectedAmount - The expected amount to compare against
+ * @param chainId - The chain ID
+ * @returns Object with normalized values for comparison
+ */
+export function normalizeTransactionValue(
+  transactionValue: bigint | string,
+  expectedAmount: string,
+  chainId: number
+): { normalizedTxValue: string; normalizedExpected: string } {
+  const txValueString =
+    typeof transactionValue === 'bigint'
+      ? transactionValue.toString()
+      : transactionValue
+
+  if (isHederaChain(chainId)) {
+    // For Hedera: transaction.value comes with 18 decimals from JSON-RPC
+    // but we expect 8 decimals (native Hedera format)
+    const txValueBigInt = BigInt(txValueString)
+    const divisor = BigInt(10 ** 10) // Convert from 18 to 8 decimals
+    const normalizedTxValue = (txValueBigInt / divisor).toString()
+
+    return {
+      normalizedTxValue,
+      normalizedExpected: expectedAmount
+    }
+  }
+
+  // For other chains, return as-is
+  return {
+    normalizedTxValue: txValueString,
+    normalizedExpected: expectedAmount
+  }
+}
+
+/**
  * Convert USD amount to native token smallest unit (wei, tinybar, etc.)
  * Client-safe version that fetches prices from API
  *
