@@ -82,11 +82,21 @@ export function formatCurrency(
       throw new Error('chainId required for smallest unit conversion')
     }
     const chainDecimals = getNativeCurrencyDecimals(chainId)
-    const formattedAmount = formatUnits(
-      typeof amount === 'bigint' ? amount : BigInt(amount),
-      chainDecimals
-    )
-    numAmount = parseFloat(formattedAmount)
+
+    if (typeof amount === 'bigint') {
+      // Already a BigInt, convert from smallest unit
+      const formattedAmount = formatUnits(amount, chainDecimals)
+      numAmount = parseFloat(formattedAmount)
+    } else if (typeof amount === 'string' && amount.includes('.')) {
+      // Decimal string - already in human-readable format, not smallest unit
+      // Just parse it directly
+      numAmount = parseFloat(amount)
+    } else {
+      // Integer string in smallest units
+      const bigIntAmount = BigInt(amount)
+      const formattedAmount = formatUnits(bigIntAmount, chainDecimals)
+      numAmount = parseFloat(formattedAmount)
+    }
   } else {
     numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
   }
