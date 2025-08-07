@@ -1,4 +1,5 @@
 import { ethers } from 'ethers'
+import { ZERO_ADDRESS } from 'thirdweb'
 
 import { ESCROW_CORE_ABI, getEscrowCoreAddress } from '@/lib/blockchain'
 
@@ -349,23 +350,15 @@ export class EscrowCoreService extends BaseContractClientService {
       if (!this.contract) {
         throw new Error('Contract not initialized')
       }
-      const feeBasisPoints = await this.contract.platformFeeBasisPoints()
+      // Get the default fee percentage using zero address
+      // This returns the default platform fee when no user-specific fee is set
+      const feeBasisPoints =
+        await this.contract.getUserFeePercentage(ZERO_ADDRESS)
       return Number(feeBasisPoints) / 100
     } catch (error) {
-      throw error
-    }
-  }
-
-  async calculateFee(amount: string): Promise<bigint> {
-    try {
-      if (!this.contract) {
-        throw new Error('Contract not initialized')
-      }
-      const feeBasisPoints = await this.contract.platformFeeBasisPoints()
-      const amountBigInt = BigInt(amount)
-      return (amountBigInt * feeBasisPoints) / BigInt(10000)
-    } catch (error) {
-      throw error
+      // Fallback to default fee if contract call fails
+      console.error('Failed to fetch platform fee:', error)
+      return 2.5 // Default 2.5% fee
     }
   }
 
