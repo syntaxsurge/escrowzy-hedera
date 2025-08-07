@@ -121,6 +121,7 @@ export function TradeActionDialog({
   )
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const hasShownExpiredToastRef = useRef(false)
+  const isFetchingFeeRef = useRef(false)
 
   // Use secure server-side fee calculation
   const { calculateFee } = useSecureFee()
@@ -128,16 +129,23 @@ export function TradeActionDialog({
 
   // Calculate fee when dialog opens or trade amount changes
   useEffect(() => {
-    if (open && trade.amount && chainId) {
+    if (open && trade.amount && chainId && !isFetchingFeeRef.current) {
+      // Prevent duplicate calls
+      isFetchingFeeRef.current = true
+
       // Calculate fee securely on server side
-      calculateFee(trade.amount, chainId, address).then((result: any) => {
-        if (result) {
-          setCalculatedFee(result.feeAmount.toFixed(6))
-          setFeePercentage(result.feePercentage)
-        }
-      })
+      calculateFee(trade.amount, chainId, address)
+        .then((result: any) => {
+          if (result) {
+            setCalculatedFee(result.feeAmount.toFixed(6))
+            setFeePercentage(result.feePercentage)
+          }
+        })
+        .finally(() => {
+          isFetchingFeeRef.current = false
+        })
     }
-  }, [open, trade.amount, chainId, address, calculateFee])
+  }, [open, trade.amount, chainId, address])
 
   // Reset native conversion state when dialog closes
   useEffect(() => {
