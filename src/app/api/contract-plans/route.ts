@@ -1,8 +1,9 @@
 import { withSubscriptionValidation } from '@/lib/blockchain/contract-validation'
+import { convertWeiToUSD } from '@/lib/utils/token-helpers'
 
 // GET /api/contract-plans - Get active plans from smart contract for public use
 export const GET = withSubscriptionValidation(
-  async ({ subscriptionService }) => {
+  async ({ subscriptionService, chainId }) => {
     const [activePlans, contractInfo] = await Promise.all([
       subscriptionService.getActivePlans(),
       subscriptionService.getContractInfo()
@@ -15,7 +16,7 @@ export const GET = withSubscriptionValidation(
         .map(async plan => {
           let priceUSD: number
           try {
-            priceUSD = await subscriptionService.convertWeiToUSD(plan.priceWei)
+            priceUSD = await convertWeiToUSD(plan.priceWei, chainId)
           } catch (error) {
             // If price conversion fails, return null to indicate pricing unavailable
             throw new Error(

@@ -6,6 +6,7 @@ import { apiResponses } from '@/lib/api/server-utils'
 import { getSession } from '@/lib/auth/session'
 import { isSupportedChainId } from '@/lib/blockchain'
 import { formatCurrency } from '@/lib/utils/string'
+import { convertWeiToUSD } from '@/lib/utils/token-helpers'
 import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 
 // GET /api/admin/contract-plans/[planKey] - Get plan by key from smart contract
@@ -52,7 +53,7 @@ export async function GET(
     }
 
     const plan = await contractService.getPlan(planKeyNum)
-    const priceUSD = await contractService.convertWeiToUSD(plan.priceWei)
+    const priceUSD = await convertWeiToUSD(plan.priceWei, chainId)
     const planWithUSDPrice = {
       ...plan,
       priceUSD,

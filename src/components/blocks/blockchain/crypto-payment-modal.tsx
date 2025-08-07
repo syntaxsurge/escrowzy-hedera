@@ -24,7 +24,7 @@ import { api } from '@/lib/api/http-client'
 import { buildTxUrl } from '@/lib/blockchain'
 import { formatCurrency } from '@/lib/utils/string'
 import { formatTeamMemberLimit } from '@/lib/utils/subscription'
-import { SubscriptionManagerClientService } from '@/services/blockchain/subscription-manager-client.service'
+import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 import { type PaymentIntent } from '@/types/payment'
 
 interface CryptoPaymentModalProps {
@@ -47,13 +47,15 @@ export function CryptoPaymentModal({
   const [wasOpen, setWasOpen] = useState(false)
 
   const { address } = useUnifiedWalletInfo()
+  const [paymentError, setPaymentError] = useState<string | null>(null)
   const { executeTransaction, isExecuting, transactionHash, reset } =
     useTransaction({
       onSuccess: async hash => {
         await confirmPaymentWithBackend(hash)
       },
-      onError: () => {
+      onError: error => {
         setStep('failed')
+        setPaymentError(error.message || 'Transaction failed')
       },
       onStatusChange: status => {
         // Update UI based on transaction status
@@ -85,6 +87,7 @@ export function CryptoPaymentModal({
       // Modal is being opened for the first time
       setStep('confirm')
       setVerificationData(null)
+      setPaymentError(null)
       reset()
       setWasOpen(true)
     } else if (!isOpen && wasOpen) {
@@ -129,7 +132,7 @@ export function CryptoPaymentModal({
     if (!paymentIntent || !address) return
 
     try {
-      const subscriptionService = new SubscriptionManagerClientService(
+      const subscriptionService = new SubscriptionManagerService(
         paymentIntent.networkId
       )
       const config = subscriptionService.getTransactionConfig(
@@ -161,6 +164,7 @@ export function CryptoPaymentModal({
 
   const handleRetry = () => {
     setStep('confirm')
+    setPaymentError(null)
     reset()
   }
 

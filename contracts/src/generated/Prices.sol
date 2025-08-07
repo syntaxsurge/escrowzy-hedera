@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 // Auto-generated price constants
-// Generated at: 2025-08-14T07:55:18.427Z
+// Generated at: 2025-08-14T13:13:05.659Z
 // USD Prices: Pro=$3, Enterprise=$5
 
 library Prices {
@@ -15,15 +15,15 @@ library Prices {
     function getPrices(uint256 chainId) internal pure returns (uint256 proPrice, uint256 enterprisePrice) {
         if (chainId == 296) {
             // hederaTestnet (HBAR)
-            return (1115370173, 1858950288);
+            return (1195281030, 1992135051);
         }
         else if (chainId == 295) {
             // hederaMainnet (HBAR)
-            return (1115370173, 1858950288);
+            return (1195281030, 1992135051);
         }
         else if (chainId == 84532) {
             // baseSepolia (ETH)
-            return (631232101939776, 1052053503232961);
+            return (656583010695737, 1094305017826229);
         }
         else {
             // Default fallback prices

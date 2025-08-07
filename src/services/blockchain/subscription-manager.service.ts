@@ -1,16 +1,9 @@
 import { ethers } from 'ethers'
 
-import { getCachedPrice } from '@/lib/api/price-service'
 import {
-  getNativeCurrencySymbol,
-  getCoingeckoPriceId,
   getSubscriptionManagerAddress,
   SUBSCRIPTION_MANAGER_ABI
 } from '@/lib/blockchain'
-import {
-  parseNativeAmount,
-  formatNativeAmount
-} from '@/lib/utils/token-helpers'
 
 import { BaseContractClientService } from './base-contract-client.service'
 
@@ -143,6 +136,11 @@ export class SubscriptionManagerService extends BaseContractClientService {
         ]
       }
 
+      case 'paySubscription': {
+        // For payment transactions - args are passed directly
+        return params
+      }
+
       case 'setPlanPrice': {
         const priceParams = params as SetPlanPriceParams
         return [priceParams.planKey, BigInt(responseData?.priceWei || 0)]
@@ -155,69 +153,6 @@ export class SubscriptionManagerService extends BaseContractClientService {
 
   encodeContractFunctionData(functionName: string, args: any[]): string {
     return super.encodeContractFunctionData(functionName, args)
-  }
-
-  // ============================================================================
-  // Conversion Utilities (Server-side only)
-  // ============================================================================
-
-  async convertUSDToWei(usdAmount: number): Promise<bigint> {
-    if (usdAmount === 0) {
-      return BigInt(0)
-    }
-
-    try {
-      const coingeckoId = getCoingeckoPriceId(this.chainId)
-      const symbol = getNativeCurrencySymbol(this.chainId)
-
-      const priceResult = await getCachedPrice(coingeckoId, {
-        symbol,
-        coingeckoId
-      })
-
-      if (!priceResult || priceResult.price <= 0) {
-        throw new Error('Unable to fetch current price')
-      }
-
-      const nativeAmount = usdAmount / priceResult.price
-      return parseNativeAmount(nativeAmount.toString(), this.chainId)
-    } catch (error) {
-      throw new Error(
-        `Failed to convert USD to Wei: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
-    }
-  }
-
-  async convertWeiToUSD(weiAmount: bigint): Promise<number> {
-    if (weiAmount === BigInt(0)) {
-      return 0
-    }
-
-    try {
-      const coingeckoId = getCoingeckoPriceId(this.chainId)
-      const symbol = getNativeCurrencySymbol(this.chainId)
-
-      const priceResult = await getCachedPrice(coingeckoId, {
-        symbol,
-        coingeckoId
-      })
-
-      if (!priceResult || priceResult.price <= 0) {
-        throw new Error('Unable to fetch current price')
-      }
-
-      const nativeAmount = Number(formatNativeAmount(weiAmount, this.chainId))
-      return nativeAmount * priceResult.price
-    } catch (error) {
-      throw new Error(
-        `Failed to convert Wei to USD: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
-    }
-  }
-
-  async formatPriceForDisplay(weiAmount: bigint): Promise<string> {
-    const usdAmount = await this.convertWeiToUSD(weiAmount)
-    return `$${usdAmount.toFixed(2)}`
   }
 
   // ============================================================================
@@ -304,35 +239,9 @@ export class SubscriptionManagerService extends BaseContractClientService {
     }
   }
 
-  async getCreatePlanConfig(params: CreatePlanParams) {
-    const priceWei = await this.convertUSDToWei(params.priceUSD)
-    const args = this.prepareSubscriptionParams('createPlan', params, {
-      priceWei: priceWei.toString()
-    })
-    return this.getTransactionConfig('createPlan', args)
-  }
-
-  async getUpdatePlanConfig(params: UpdatePlanParams) {
-    const priceWei = await this.convertUSDToWei(params.priceUSD)
-    const args = this.prepareSubscriptionParams('updatePlan', params, {
-      priceWei: priceWei.toString()
-    })
-    return this.getTransactionConfig('updatePlan', args)
-  }
-
   getDeletePlanConfig(planKey: number) {
     const args = this.prepareSubscriptionParams('deletePlan', { planKey })
     return this.getTransactionConfig('deletePlan', args)
-  }
-
-  async getSetPlanPriceConfig(planKey: number, priceUSD: number) {
-    const priceWei = await this.convertUSDToWei(priceUSD)
-    const args = this.prepareSubscriptionParams(
-      'setPlanPrice',
-      { planKey, priceUSD },
-      { priceWei: priceWei.toString() }
-    )
-    return this.getTransactionConfig('setPlanPrice', args)
   }
 
   // ============================================================================

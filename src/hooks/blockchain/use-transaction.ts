@@ -37,7 +37,7 @@ import {
   getBlockExplorerUrl
 } from '@/lib/blockchain/blockchain-transaction'
 import { thirdwebClient } from '@/lib/blockchain/thirdweb-client'
-import { SubscriptionManagerClientService } from '@/services/blockchain/subscription-manager-client.service'
+import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 import { type TransactionStatus } from '@/types/transaction'
 
 // ============================================================================
@@ -435,7 +435,16 @@ export function useTransaction(defaultOptions?: TransactionOptions) {
           const errorMessage =
             error instanceof Error ? error.message : 'Transaction failed'
 
-          if (
+          // Parse contract revert messages
+          if (errorMessage.includes('Subscription: incorrect payment')) {
+            throw new Error(
+              'Payment amount does not match the subscription price. Please try again.'
+            )
+          } else if (errorMessage.includes('Subscription: unknown plan')) {
+            throw new Error(
+              'Invalid subscription plan selected. Please refresh and try again.'
+            )
+          } else if (
             errorMessage.includes('user rejected') ||
             errorMessage.includes('User denied')
           ) {
@@ -446,7 +455,13 @@ export function useTransaction(defaultOptions?: TransactionOptions) {
             throw new Error('Gas estimation failed. Please try again')
           }
 
-          throw error
+          // Clean up malformed error messages that include contract addresses
+          const cleanedMessage = errorMessage
+            .replace(/contract:\s*0x[a-fA-F0-9]+/gi, '')
+            .replace(/chainId:\s*\d+/gi, '')
+            .trim()
+
+          throw new Error(cleanedMessage || 'Transaction failed')
         }
 
         if (!hash) {
@@ -543,7 +558,7 @@ export function useTransaction(defaultOptions?: TransactionOptions) {
 
         return hash
       } catch (err) {
-        const errorMessage =
+        let errorMessage =
           err instanceof Error ? err.message : 'Transaction failed'
 
         // Update toast to failed state
@@ -677,17 +692,15 @@ export function useAdminTransaction() {
       // Always use the API endpoint to prepare transaction data
       const payload = {
         action: method,
-        chainId: effectiveChainId,
         ...args
       }
 
-      const response = await api.post(
-        apiEndpoints.admin.contract.transactions,
-        payload,
-        {
-          shouldShowErrorToast: false
-        }
-      )
+      // Add chainId as query parameter
+      const url = `${apiEndpoints.admin.contract.transactions}?chainId=${effectiveChainId}`
+
+      const response = await api.post(url, payload, {
+        shouldShowErrorToast: false
+      })
 
       if (!response.success) {
         throw new Error(response.error || 'Failed to prepare transaction')
@@ -703,8 +716,8 @@ export function useAdminTransaction() {
         effectiveChainId
       )
 
-      // Use the SubscriptionManagerClientService's transaction config
-      const subscriptionService = new SubscriptionManagerClientService(
+      // Use the SubscriptionManagerService's transaction config
+      const subscriptionService = new SubscriptionManagerService(
         effectiveChainId
       )
       const config = subscriptionService.getTransactionConfig(
@@ -732,7 +745,7 @@ export function useAdminTransaction() {
     chainId: number
   ): any[] => {
     // Use centralized parameter preparation for subscription manager
-    const subscriptionService = new SubscriptionManagerClientService(chainId)
+    const subscriptionService = new SubscriptionManagerService(chainId)
     return subscriptionService.contractAddress
       ? subscriptionService.prepareSubscriptionParams(
           method,

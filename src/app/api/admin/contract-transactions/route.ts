@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { apiResponses } from '@/lib/api/server-utils'
 import { validateSubscriptionRequest } from '@/lib/blockchain/contract-validation'
-import { parseNativeAmount } from '@/lib/utils/token-helpers'
+import { parseNativeAmount, convertUSDToWei } from '@/lib/utils/token-helpers'
 import {
   type CreatePlanParams,
   type UpdatePlanParams,
@@ -38,9 +38,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Convert USD to wei
-        const priceWei = await subscriptionService.convertUSDToWei(
-          createParams.priceUSD
-        )
+        const priceWei = await convertUSDToWei(createParams.priceUSD, chainId)
 
         // Prepare transaction data
         const data = subscriptionService.encodeContractFunctionData(
@@ -71,9 +69,7 @@ export async function POST(request: NextRequest) {
         const updateParams: UpdatePlanParams = params
 
         // Convert USD to wei
-        const priceWei = await subscriptionService.convertUSDToWei(
-          updateParams.priceUSD
-        )
+        const priceWei = await convertUSDToWei(updateParams.priceUSD, chainId)
 
         // Prepare transaction data
         const data = subscriptionService.encodeContractFunctionData(
@@ -161,9 +157,7 @@ export async function POST(request: NextRequest) {
         const priceParams: SetPlanPriceParams = params
 
         // Convert USD to wei
-        const priceWei = await subscriptionService.convertUSDToWei(
-          priceParams.priceUSD
-        )
+        const priceWei = await convertUSDToWei(priceParams.priceUSD, chainId)
 
         // Prepare transaction data
         const data = subscriptionService.encodeContractFunctionData(

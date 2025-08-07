@@ -2,11 +2,11 @@ import { ethers } from 'ethers'
 
 import { withSubscriptionValidation } from '@/lib/blockchain/contract-validation'
 import { formatCurrency } from '@/lib/utils/string'
-import { formatNativeAmount } from '@/lib/utils/token-helpers'
+import { formatNativeAmount, convertWeiToUSD } from '@/lib/utils/token-helpers'
 
 // GET /api/admin/contract-plans - Get all plans from smart contract
 export const GET = withSubscriptionValidation(
-  async ({ subscriptionService }) => {
+  async ({ subscriptionService, chainId }) => {
     // Try to get all plans first, fallback to active plans if getAllPlans is not available
     let plans
     try {
@@ -24,9 +24,7 @@ export const GET = withSubscriptionValidation(
     // Convert Wei prices to USD for display and serialize BigInt values
     const plansWithUSDPrices = await Promise.all(
       plans.map(async plan => {
-        const priceUSD = await subscriptionService.convertWeiToUSD(
-          plan.priceWei
-        )
+        const priceUSD = await convertWeiToUSD(plan.priceWei, chainId)
         return {
           planKey: plan.planKey,
           name: plan.name,

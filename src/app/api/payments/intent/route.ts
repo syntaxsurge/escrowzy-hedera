@@ -4,6 +4,7 @@ import { apiResponses } from '@/lib/api/server-utils'
 import { requireAuth } from '@/lib/auth/auth-utils'
 import { requireTeamMember } from '@/lib/auth/team-auth'
 import { createIntentSchema } from '@/lib/schemas/payment'
+import { convertWeiToUSD } from '@/lib/utils/token-helpers'
 import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 import { createPaymentIntent } from '@/services/payment'
 
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert plan price from Wei to USD for display purposes
-    const priceUSD = await contractService.convertWeiToUSD(plan.priceWei)
+    const priceUSD = await convertWeiToUSD(plan.priceWei, networkId)
 
     const planDetails = {
       id: plan.name,
