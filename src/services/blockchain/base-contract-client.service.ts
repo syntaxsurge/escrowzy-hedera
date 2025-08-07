@@ -48,10 +48,9 @@ export abstract class BaseContractClientService {
       )
     }
 
-    // Only initialize ethers if we're in a server environment or have a signer/provider
-    if (typeof window === 'undefined' || signerOrProvider) {
-      this.initializeEthers(signerOrProvider)
-    }
+    // Always initialize ethers for read operations
+    // Write operations are handled through wagmi/thirdweb hooks
+    this.initializeEthers(signerOrProvider)
   }
 
   private initializeEthers(signerOrProvider?: ethers.Signer | ethers.Provider) {
