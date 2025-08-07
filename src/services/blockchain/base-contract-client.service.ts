@@ -54,39 +54,27 @@ export abstract class BaseContractClientService {
   }
 
   private initializeEthers(signerOrProvider?: ethers.Signer | ethers.Provider) {
-    try {
-      if (signerOrProvider) {
-        if ('getAddress' in signerOrProvider) {
-          this.signer = signerOrProvider as ethers.Signer
-          this.provider = signerOrProvider.provider!
-        } else {
-          this.provider = signerOrProvider as ethers.Provider
-        }
+    if (signerOrProvider) {
+      if ('getAddress' in signerOrProvider) {
+        this.signer = signerOrProvider as ethers.Signer
+        this.provider = signerOrProvider.provider!
       } else {
-        if (!getSupportedChainIds().includes(this.chainId)) {
-          console.warn(
-            `Chain ID ${this.chainId} not fully supported, contract calls may fail`
-          )
-        }
-
-        const rpcUrl = getRpcUrl(this.chainId as any)
-        this.provider = new ethers.JsonRpcProvider(rpcUrl)
+        this.provider = signerOrProvider as ethers.Provider
+      }
+    } else {
+      if (!getSupportedChainIds().includes(this.chainId)) {
+        throw new Error(`Unsupported chain ID: ${this.chainId}`)
       }
 
-      this.contract = new ethers.Contract(
-        this.contractAddress,
-        this.abi,
-        this.signer || this.provider
-      )
-    } catch (error) {
-      console.error(
-        `Failed to initialize contract for chain ${this.chainId}:`,
-        error
-      )
-      // Don't throw - allow the service to be created but contract calls will fail gracefully
-      this.contract = null
-      this.provider = null
+      const rpcUrl = getRpcUrl(this.chainId as any)
+      this.provider = new ethers.JsonRpcProvider(rpcUrl)
     }
+
+    this.contract = new ethers.Contract(
+      this.contractAddress,
+      this.abi,
+      this.signer || this.provider
+    )
   }
 
   /**
