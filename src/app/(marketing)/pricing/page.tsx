@@ -1522,16 +1522,27 @@ function PricingCard({
             })}
           </p>
         )}
-        {plan.feeTierBasisPoints !== undefined &&
-          plan.feeTierBasisPoints !== null && (
-            <div className='mt-3 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 dark:bg-blue-950/20'>
-              <DollarSign className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-              <span className='text-sm font-medium text-blue-700 dark:text-blue-300'>
-                Trading Fee:{' '}
-                {(Number(plan.feeTierBasisPoints) / 100).toFixed(1)}%
-              </span>
-            </div>
-          )}
+        <div className='mt-3 space-y-2'>
+          {plan.feeTierBasisPoints !== undefined &&
+            plan.feeTierBasisPoints !== null && (
+              <div className='flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 dark:bg-blue-950/20'>
+                <DollarSign className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+                <span className='text-sm font-medium text-blue-700 dark:text-blue-300'>
+                  {(Number(plan.feeTierBasisPoints) / 100).toFixed(1)}% trading fee
+                </span>
+              </div>
+            )}
+          <div className='flex items-center gap-2 rounded-lg bg-purple-50 px-3 py-2 dark:bg-purple-950/20'>
+            <Users className='h-4 w-4 text-purple-600 dark:text-purple-400' />
+            <span className='text-sm font-medium text-purple-700 dark:text-purple-300'>
+              {formatTeamMemberLimit(
+                typeof plan.maxMembers === 'string'
+                  ? parseInt(plan.maxMembers)
+                  : plan.maxMembers
+              )}
+            </span>
+          </div>
+        </div>
       </div>
 
       <ul className='mb-8 flex-1 space-y-3'>
@@ -1541,16 +1552,6 @@ function PricingCard({
             <span className='text-foreground'>{feature}</span>
           </li>
         ))}
-        <li className='flex items-start'>
-          <Check className='mt-0.5 mr-3 h-5 w-5 flex-shrink-0 text-green-500' />
-          <span className='text-foreground'>
-            {formatTeamMemberLimit(
-              typeof plan.maxMembers === 'string'
-                ? parseInt(plan.maxMembers)
-                : plan.maxMembers
-            )}
-          </span>
-        </li>
       </ul>
 
       {/* Not connected - show connect wallet */}
