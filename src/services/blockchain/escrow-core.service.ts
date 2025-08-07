@@ -380,7 +380,8 @@ export class EscrowCoreService extends BaseContractClientService {
   async getUserFeePercentage(userAddress: string): Promise<number> {
     try {
       if (!this.contract) {
-        throw new Error('Contract not initialized')
+        console.warn('Contract not initialized, using default fee')
+        return 2.5 // Default 2.5% fee
       }
       // Query the fee through EscrowCore which gets it from SubscriptionManager
       const feeBasisPoints = await this.contract.getUserFeePercentage(
@@ -389,9 +390,9 @@ export class EscrowCoreService extends BaseContractClientService {
       // Convert basis points to percentage (250 = 2.5%)
       return Number(feeBasisPoints) / 100
     } catch (error) {
-      // If the method doesn't exist on EscrowCore, fall back to platform fee
-      console.error('Failed to fetch user-specific fee:', error)
-      return this.getFeePercentage()
+      // If the contract call fails, use default fee
+      console.warn('Failed to fetch user-specific fee, using default:', error)
+      return 2.5 // Default 2.5% fee
     }
   }
 

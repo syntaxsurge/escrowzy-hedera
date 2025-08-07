@@ -411,16 +411,25 @@ export function useEscrow() {
 
   const calculateFeePercentage = useCallback(
     async (userAddress?: string): Promise<number> => {
-      if (!userAddress || !escrowService) {
-        throw new Error(
-          'Cannot calculate fee without user address and contract service'
-        )
+      if (!userAddress) {
+        console.warn('No user address provided, using default fee')
+        return 0.025 // Default 2.5% fee as decimal
       }
 
-      // Use the service method to get user fee percentage
-      const feePercentage =
-        await escrowService.getUserFeePercentage(userAddress)
-      return feePercentage / 100 // Convert from percentage to decimal (2.5 -> 0.025)
+      if (!escrowService) {
+        console.warn('Escrow service not available, using default fee')
+        return 0.025 // Default 2.5% fee as decimal
+      }
+
+      try {
+        // Use the service method to get user fee percentage
+        const feePercentage =
+          await escrowService.getUserFeePercentage(userAddress)
+        return feePercentage / 100 // Convert from percentage to decimal (2.5 -> 0.025)
+      } catch (error) {
+        console.warn('Failed to get user fee percentage, using default:', error)
+        return 0.025 // Default 2.5% fee as decimal
+      }
     },
     [escrowService]
   )
