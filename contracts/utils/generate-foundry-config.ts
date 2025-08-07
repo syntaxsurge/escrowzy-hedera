@@ -5,7 +5,8 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { getBlockchainConfig } from '../../src/lib/blockchain'
 import { loadBlockchainConfigAsync } from '../../src/config/blockchain-config-loader'
-import { envScripts, scriptEnv } from '../../src/config/env.scripts'
+import { scriptEnv } from '../../src/config/env.scripts'
+import { generatePricesContract } from './generate-prices'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -119,28 +120,22 @@ deploy_to_network() {
     
     echo "Deploying to $network..."
     
-    # First, generate the blockchain config file
-    echo "Generating blockchain configuration..."
+    # First, generate the blockchain config file and prices
+    echo "Generating blockchain configuration and prices..."
     (cd .. && npm run prebuild) > /dev/null 2>&1
     
-    # Convert USD prices to native currency for this network
-    if npx tsx --version &> /dev/null; then
-        echo "Converting USD prices to native currency..."
-        # Capture the export commands from the conversion script
-        PRICE_EXPORTS=$(NODE_OPTIONS='--no-warnings=ExperimentalWarning' npx tsx utils/convert-prices.ts $network | tail -3)
-        eval "$PRICE_EXPORTS"
-    else
-        echo "Warning: tsx not found, using default prices"
-    fi
+    # Build contracts to ensure prices are generated
+    echo "Building contracts with updated prices..."
+    ./build.sh > /dev/null 2>&1
     
     # Export ADMIN_ADDRESS for the forge script
     export ADMIN_ADDRESS
     
     # Deploy based on network type
     if [[ "$network" == "hederaTestnet" || "$network" == "hederaMainnet" ]]; then
-        # Hedera deployment - uses special script with transaction batching
-        echo "Deploying to Hedera network (using optimized script)..."
-        forge script script/DeployHedera.s.sol:DeployHederaScript --rpc-url $network --private-key $DEPLOY_PRIVATE_KEY --broadcast --slow --legacy
+        # Hedera deployment - uses transaction batching flags
+        echo "Deploying to Hedera network (using optimized flags)..."
+        forge script script/Deploy.s.sol:DeployScript --rpc-url $network --private-key $DEPLOY_PRIVATE_KEY --broadcast --slow --legacy
         
         if [ "$verify_flag" = "--verify" ]; then
             echo ""
@@ -148,9 +143,9 @@ deploy_to_network() {
             echo "forge verify-contract <CONTRACT_ADDRESS> <CONTRACT_PATH> --chain-id $([[ \"$network\" == \"hederaTestnet\" ]] && echo 296 || echo 295) --verifier sourcify --verifier-url https://server-verify.hashscan.io/"
         fi
     elif [ "$verify_flag" = "--verify" ]; then
-        forge script script/Deploy.s.sol --rpc-url $network --private-key $DEPLOY_PRIVATE_KEY --broadcast --verify
+        forge script script/Deploy.s.sol:DeployScript --rpc-url $network --private-key $DEPLOY_PRIVATE_KEY --broadcast --verify
     else
-        forge script script/Deploy.s.sol --rpc-url $network --private-key $DEPLOY_PRIVATE_KEY --broadcast
+        forge script script/Deploy.s.sol:DeployScript --rpc-url $network --private-key $DEPLOY_PRIVATE_KEY --broadcast
     fi
 }
 
@@ -229,6 +224,10 @@ async function main() {
     fs.writeFileSync(deployHelperPath, deployHelper)
     fs.chmodSync(deployHelperPath, '755')
     console.log('✓ Generated deploy.sh')
+
+    // Generate price constants for all chains
+    console.log('\n✓ Generating price constants...')
+    await generatePricesContract()
 
     console.log('\nConfiguration generated successfully!')
     const yamlConfig = await loadBlockchainConfigAsync()

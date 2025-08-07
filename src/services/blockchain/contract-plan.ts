@@ -1,7 +1,7 @@
 import 'server-only'
 import { ethers } from 'ethers'
 
-import { getCryptoPrice } from '@/lib/api/coingecko'
+import { getCachedPrice } from '@/lib/api/price-service'
 import {
   getNativeCurrencySymbol,
   getCoingeckoPriceId,
@@ -103,13 +103,19 @@ export class ContractPlanService {
 
     try {
       const coingeckoId = getCoingeckoPriceId(this.chainId)
+      const symbol = getNativeCurrencySymbol(this.chainId)
 
-      // Use centralized getCryptoPrice function with revalidate option
-      const nativePrice = await getCryptoPrice(coingeckoId, {
-        revalidate: 60 // Cache for 1 minute
+      // Use centralized price service with fallback
+      const priceResult = await getCachedPrice(coingeckoId, {
+        symbol,
+        coingeckoId
       })
 
-      const nativeAmount = usdAmount / nativePrice
+      if (!priceResult || priceResult.price <= 0) {
+        throw new Error('Unable to fetch current price')
+      }
+
+      const nativeAmount = usdAmount / priceResult.price
       // Convert to smallest unit using chain-specific decimals
       return parseNativeAmount(nativeAmount.toString(), this.chainId)
     } catch (error) {
@@ -331,14 +337,20 @@ export class ContractPlanService {
 
     try {
       const coingeckoId = getCoingeckoPriceId(this.chainId)
+      const symbol = getNativeCurrencySymbol(this.chainId)
 
-      // Use centralized getCryptoPrice function with revalidate option
-      const nativePrice = await getCryptoPrice(coingeckoId, {
-        revalidate: 60 // Cache for 1 minute
+      // Use centralized price service with fallback
+      const priceResult = await getCachedPrice(coingeckoId, {
+        symbol,
+        coingeckoId
       })
 
+      if (!priceResult || priceResult.price <= 0) {
+        throw new Error('Unable to fetch current price')
+      }
+
       const nativeAmount = Number(formatNativeAmount(weiAmount, this.chainId))
-      return nativeAmount * nativePrice
+      return nativeAmount * priceResult.price
     } catch (error) {
       throw new Error(
         `Failed to convert Wei to USD: ${error instanceof Error ? error.message : 'Unknown error'}`

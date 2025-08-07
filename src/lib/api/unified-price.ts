@@ -1,9 +1,9 @@
 import { NATIVE_TOKEN_ADDRESS } from 'thirdweb'
 
-import { getCoingeckoId } from '@/lib/config/chain-mappings'
+import { getCoingeckoId, getChainConfig } from '@/lib/config/chain-mappings'
 
-import { getCryptoPrice } from './coingecko'
 import { okxDexClient } from './okx-dex-client'
+import { getCachedPrice } from './price-service'
 
 interface PriceResult {
   price: number | null
@@ -19,12 +19,10 @@ export async function getUnifiedPrice(
   chainName: string,
   tokenAddress?: string,
   coingeckoId?: string,
-  options: {
+  _options: {
     revalidate?: number
   } = {}
 ): Promise<PriceResult> {
-  const revalidate = options.revalidate ?? 300 // Default 5 minutes
-
   console.log('[Unified Price] Getting price for:', {
     chainId,
     chainName,
@@ -55,19 +53,26 @@ export async function getUnifiedPrice(
     }
   }
 
-  // Fallback to CoinGecko
+  // Fallback to price service with multiple providers
   // Use provided coingeckoId or get from chain config
   const geckoId = coingeckoId || getCoingeckoId(chainId)
+  const chainConfig = getChainConfig(chainId)
 
   if (geckoId) {
     try {
-      const geckoPrice = await getCryptoPrice(geckoId, { revalidate })
-      if (geckoPrice !== null) {
-        console.log('[Unified Price] Got CoinGecko price:', geckoPrice)
-        return { price: geckoPrice, source: 'coingecko' }
+      const priceResult = await getCachedPrice(geckoId, {
+        symbol: chainConfig?.nativeCurrency?.symbol,
+        coingeckoId: geckoId
+      })
+      if (priceResult?.price !== null && priceResult?.price !== undefined) {
+        console.log(
+          '[Unified Price] Got price from fallback service:',
+          priceResult.price
+        )
+        return { price: priceResult.price, source: 'coingecko' }
       }
     } catch (error) {
-      console.error('[Unified Price] CoinGecko error:', error)
+      console.error('[Unified Price] Price service error:', error)
     }
   }
 

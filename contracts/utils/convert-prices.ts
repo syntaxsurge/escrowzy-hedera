@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 import { parseUnits } from 'viem'
 import { loadBlockchainConfigAsync } from '../../src/config/blockchain-config-loader'
-import { getCryptoPriceCLI } from '../../src/lib/api/coingecko-cli'
+import { getCachedPrice } from '../../src/lib/api/price-service'
 import { scriptEnv } from '../../src/config/env.scripts'
 
 async function convertUsdToPrices() {
@@ -20,14 +20,14 @@ async function convertUsdToPrices() {
   }
 
   try {
-    // Get Coingecko API key from environment if available
-    const { coingecko: coingeckoApiKey } = scriptEnv.getApiKeys()
-    const cryptoPrice = await getCryptoPriceCLI(
-      chainConfig.coingeckoId,
-      coingeckoApiKey
-    )
+    // Get price using fallback service
+    const priceResult = await getCachedPrice(chainConfig.coingeckoId, {
+      symbol: chainConfig.nativeCurrency.symbol,
+      coingeckoId: chainConfig.coingeckoId
+    })
 
-    if (cryptoPrice <= 0) {
+    const cryptoPrice = priceResult?.price
+    if (!cryptoPrice || cryptoPrice <= 0) {
       throw new Error('Invalid crypto price')
     }
 

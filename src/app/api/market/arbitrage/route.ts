@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { eq } from 'drizzle-orm'
 
-import { getCryptoPrice } from '@/lib/api/coingecko'
 import { okxDexClient } from '@/lib/api/okx-dex-client'
-import { getCoingeckoId } from '@/lib/config/chain-mappings'
+import { getCachedPrice } from '@/lib/api/price-service'
+import { getCoingeckoId, getChainConfig } from '@/lib/config/chain-mappings'
 import { db } from '@/lib/db/drizzle'
 import { escrowListings as listings } from '@/lib/db/schema'
 
@@ -62,15 +62,18 @@ export async function GET(request: NextRequest) {
           console.error('Failed to get OKX DEX price:', error)
         }
 
-        // Try to get CoinGecko price using chain's native currency ID
+        // Try to get price with fallback using chain's native currency ID
         const coingeckoId = getCoingeckoId(chainId)
-        if (coingeckoId) {
+        const chainConfig = getChainConfig(chainId)
+        if (coingeckoId && chainConfig) {
           try {
-            coingeckoPrice = await getCryptoPrice(coingeckoId, {
-              revalidate: 60
+            const priceResult = await getCachedPrice(coingeckoId, {
+              symbol: chainConfig.nativeCurrency.symbol,
+              coingeckoId
             })
+            coingeckoPrice = priceResult?.price ?? null
           } catch (error) {
-            console.error('Failed to get CoinGecko price:', error)
+            console.error('Failed to get price with fallback:', error)
           }
         }
 

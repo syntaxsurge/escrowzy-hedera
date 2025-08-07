@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getCryptoPrice } from '@/lib/api/coingecko'
+import { getCachedPrice } from '@/lib/api/price-service'
 import {
   getCoingeckoPriceId,
-  getNativeCurrencyDecimals
+  getNativeCurrencyDecimals,
+  getNativeCurrencySymbol
 } from '@/lib/blockchain'
 
 export async function POST(request: NextRequest) {
@@ -17,18 +18,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get the CoinGecko ID for the chain
+    // Get the CoinGecko ID and symbol for the chain
     const coingeckoId = getCoingeckoPriceId(chainId)
     if (!coingeckoId) {
       return NextResponse.json({ error: 'Unsupported chain' }, { status: 400 })
     }
+    const symbol = getNativeCurrencySymbol(chainId)
 
-    // Get the current price of the native token
-    const nativePrice = await getCryptoPrice(coingeckoId)
+    // Get the current price of the native token using fallback service
+    const priceResult = await getCachedPrice(coingeckoId, {
+      symbol,
+      coingeckoId
+    })
+
+    if (!priceResult || priceResult.price <= 0) {
+      return NextResponse.json(
+        { error: 'Unable to fetch current price' },
+        { status: 500 }
+      )
+    }
 
     // Convert USD to native currency
     const usdValue = parseFloat(usdAmount)
-    const nativeAmount = usdValue / nativePrice
+    const nativeAmount = usdValue / priceResult.price
 
     // Get chain-specific decimals for proper formatting
     const decimals = getNativeCurrencyDecimals(chainId)
@@ -40,7 +52,7 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         nativeAmount: formattedAmount,
-        nativePrice,
+        nativePrice: priceResult.price,
         usdAmount,
         chainId
       }

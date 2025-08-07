@@ -3,7 +3,7 @@ import { eq, and, sql } from 'drizzle-orm'
 import { createPublicClient, http, decodeEventLog } from 'viem'
 
 import { timeConstants } from '@/config/app-routes'
-import { getCryptoPrice } from '@/lib/api/coingecko'
+import { getCachedPrice } from '@/lib/api/price-service'
 import {
   getSubscriptionManagerAddress,
   getCoingeckoPriceId,
@@ -83,7 +83,14 @@ export async function createPaymentIntent(
   if (planDetails.priceWei !== undefined) {
     amountWei = planDetails.priceWei
     // Get current crypto price for display purposes
-    cryptoPrice = await getCryptoPrice(network.coingeckoId)
+    const priceResult = await getCachedPrice(network.coingeckoId, {
+      symbol: network.nativeCurrency,
+      coingeckoId: network.coingeckoId
+    })
+    if (!priceResult || priceResult.price <= 0) {
+      throw new Error('Invalid price data')
+    }
+    cryptoPrice = priceResult.price
     // Calculate the crypto amount for display
     amount = formatNativeAmount(amountWei, networkId)
   } else {
@@ -91,10 +98,14 @@ export async function createPaymentIntent(
     const usdPrice = parseFloat(planDetails.price)
     const network = getPaymentNetworkConfig(networkId)
 
-    cryptoPrice = await getCryptoPrice(network.coingeckoId)
-    if (!cryptoPrice || cryptoPrice <= 0) {
+    const priceResult = await getCachedPrice(network.coingeckoId, {
+      symbol: network.nativeCurrency,
+      coingeckoId: network.coingeckoId
+    })
+    if (!priceResult || priceResult.price <= 0) {
       throw new Error('Invalid price data')
     }
+    cryptoPrice = priceResult.price
 
     // Calculate amount needed in native currency
     amount = (usdPrice / cryptoPrice).toString()

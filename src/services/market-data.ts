@@ -4,8 +4,8 @@ import { unstable_cache } from 'next/cache'
 
 import { eq, and, sql } from 'drizzle-orm'
 
-import { getCryptoPrice } from '@/lib/api/coingecko'
 import { okxDexClient } from '@/lib/api/okx-dex-client'
+import { getCachedPrice } from '@/lib/api/price-service'
 import { db } from '@/lib/db/drizzle'
 import { escrowListings as listings } from '@/lib/db/schema'
 
@@ -87,14 +87,15 @@ export async function getUnifiedMarketData(
     }
   }
 
-  // Fetch CoinGecko price
+  // Fetch price with fallback providers
   if (coingeckoId) {
     try {
-      coingeckoPrice = await getCryptoPrice(coingeckoId, {
-        revalidate: 60
+      const priceResult = await getCachedPrice(coingeckoId, {
+        coingeckoId
       })
+      coingeckoPrice = priceResult?.price ?? null
     } catch (error) {
-      console.error('Failed to fetch CoinGecko price:', error)
+      console.error('Failed to fetch price with fallback:', error)
     }
   }
 

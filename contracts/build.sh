@@ -30,6 +30,15 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Generate price constants for all chains
+echo "Generating price constants..."
+(cd .. && NODE_OPTIONS="--no-warnings=ExperimentalWarning" npx tsx ./contracts/utils/generate-prices.ts)
+
+if [ $? -ne 0 ]; then
+    echo "Failed to generate price constants."
+    exit 1
+fi
+
 # Build contracts
 forge build
 

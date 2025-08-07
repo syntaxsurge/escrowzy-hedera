@@ -236,8 +236,30 @@ export const apiEndpoints = {
   },
   external: {
     coingecko: {
+      baseUrl: 'https://api.coingecko.com/api/v3',
       price: (coingeckoId: string) =>
         `https://api.coingecko.com/api/v3/simple/price?ids=${coingeckoId}&vs_currencies=usd`
+    },
+    binance: {
+      baseUrl: 'https://api.binance.com/api/v3',
+      ticker: 'https://api.binance.com/api/v3/ticker/price',
+      tickerSymbol: (symbol: string) =>
+        `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`
+    },
+    kraken: {
+      baseUrl: 'https://api.kraken.com/0',
+      ticker: 'https://api.kraken.com/0/public/Ticker'
+    },
+    cryptocompare: {
+      baseUrl: 'https://min-api.cryptocompare.com',
+      price: 'https://min-api.cryptocompare.com/data/price',
+      priceMulti: 'https://min-api.cryptocompare.com/data/pricemulti'
+    },
+    coinbase: {
+      baseUrl: 'https://api.coinbase.com/v2',
+      exchangeRates: 'https://api.coinbase.com/v2/exchange-rates',
+      spotPrice: (pair: string) =>
+        `https://api.coinbase.com/v2/exchange-rates?currency=${pair}`
     },
     resend: {
       emails: 'https://api.resend.com/emails'

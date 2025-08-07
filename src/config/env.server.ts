@@ -26,6 +26,8 @@ const ServerEnv = z.object({
 
   // External APIs
   COINGECKO_API_KEY: z.string().optional().default(''),
+  CRYPTOCOMPARE_API_KEY: z.string().optional().default(''),
+  BINANCE_API_KEY: z.string().optional().default(''), // Optional for private endpoints
   OKX_DEX_API_KEY: z.string().optional().default(''),
   OKX_DEX_SECRET_KEY: z.string().optional().default(''),
   OKX_DEX_PASSPHRASE: z.string().optional().default(''),

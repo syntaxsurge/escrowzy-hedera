@@ -1,36 +1,40 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-// Deploys contracts with delays to ensure proper transaction processing
+// Universal deployment script for all chains
 
 import "forge-std/Script.sol";
 import "../src/SubscriptionManager.sol";
 import "../src/EscrowCore.sol";
 import "../src/AchievementNFT.sol";
+import {Prices} from "../src/generated/Prices.sol";
 
-contract DeployHederaScript is Script {
+contract DeployScript is Script {
     function run() external {
         // Get admin address from environment
         address adminAddress = vm.envAddress("ADMIN_ADDRESS");
         
-        // For pricing, check env vars first, then use defaults
+        // Get prices for current chain
         uint256 proPriceWei;
         uint256 enterprisePriceWei;
         
+        // Check for environment variable overrides first
         try vm.envUint("PRO_PRICE_WEI") returns (uint256 price) {
             proPriceWei = price;
+            console.log("Using environment pro price:", proPriceWei);
         } catch {
-            // Default prices in wei (roughly $3 and $5 in HBAR)
-            proPriceWei = 11.5 ether; // ~$3 in HBAR
-            console.log("Using default pro price:", proPriceWei);
+            // Use generated prices based on current chain ID
+            proPriceWei = Prices.getProPrice(block.chainid);
+            console.log("Using generated pro price for chain", block.chainid, ":", proPriceWei);
         }
         
         try vm.envUint("ENTERPRISE_PRICE_WEI") returns (uint256 price) {
             enterprisePriceWei = price;
+            console.log("Using environment enterprise price:", enterprisePriceWei);
         } catch {
-            // Default prices in wei
-            enterprisePriceWei = 19.2 ether; // ~$5 in HBAR
-            console.log("Using default enterprise price:", enterprisePriceWei);
+            // Use generated prices based on current chain ID
+            enterprisePriceWei = Prices.getEnterprisePrice(block.chainid);
+            console.log("Using generated enterprise price for chain", block.chainid, ":", enterprisePriceWei);
         }
         
         // Start broadcast for deployment
@@ -48,7 +52,7 @@ contract DeployHederaScript is Script {
         // Stop and restart broadcast to ensure transaction is processed
         vm.stopBroadcast();
         
-        // Small delay to ensure Hedera processes the transaction
+        // Restart broadcast for next deployment
         vm.startBroadcast();
         
         // Deploy EscrowCore
@@ -77,8 +81,8 @@ contract DeployHederaScript is Script {
         
         vm.stopBroadcast();
         
-        // Get native currency symbol from environment (if available)
-        string memory nativeCurrency = "HBAR";
+        // Get native currency symbol from generated Prices library
+        string memory nativeCurrency = Prices.getNativeCurrencySymbol(block.chainid);
         
         // Log deployment information
         console.log("================================");

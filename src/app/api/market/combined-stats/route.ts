@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { NATIVE_TOKEN_ADDRESS } from 'thirdweb'
 
-import { getCryptoPrice } from '@/lib/api/coingecko'
 import { okxDexClient } from '@/lib/api/okx-dex-client'
+import { getCachedPrice } from '@/lib/api/price-service'
 
 export interface MarketStats {
   chain: string
@@ -123,14 +123,20 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Always try CoinGecko if we have a coingecko ID
+    // Always try price service with fallback if we have a coingecko ID
     if (coingeckoId) {
       try {
-        coingeckoPrice = await getCryptoPrice(coingeckoId, { revalidate: 300 })
-        console.log('[Combined Stats API] CoinGecko price:', coingeckoPrice)
+        const priceResult = await getCachedPrice(coingeckoId, {
+          coingeckoId
+        })
+        coingeckoPrice = priceResult?.price ?? null
+        console.log(
+          '[Combined Stats API] Price from fallback service:',
+          coingeckoPrice
+        )
       } catch (error) {
         console.error(
-          '[Combined Stats API] Failed to get CoinGecko price:',
+          '[Combined Stats API] Failed to get price with fallback:',
           error
         )
       }
@@ -210,11 +216,12 @@ export async function POST(request: NextRequest) {
 
         if (token.coingeckoId) {
           try {
-            coingeckoPrice = await getCryptoPrice(token.coingeckoId, {
-              revalidate: 60
+            const priceResult = await getCachedPrice(token.coingeckoId, {
+              coingeckoId: token.coingeckoId
             })
+            coingeckoPrice = priceResult?.price ?? null
           } catch (error) {
-            console.error('Failed to get CoinGecko price:', error)
+            console.error('Failed to get price with fallback:', error)
           }
         }
 
