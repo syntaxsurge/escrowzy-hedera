@@ -177,8 +177,9 @@ export function AcceptListingDialog({
         throw new Error('You must be logged in to accept a listing')
       }
 
-      // Use default chainId if not connected to wallet
-      const currentChainId = chainId || 1 // Default to mainnet if not connected
+      // Use listing's chainId if available, otherwise use wallet's chainId
+      const listingChainId = listing.chainId ? parseInt(listing.chainId) : null
+      const currentChainId = listingChainId || chainId || 1 // Use listing chain, fallback to wallet, then mainnet
 
       // Ensure amount is a string and not null/undefined
       const tradeAmount = isDomainListing

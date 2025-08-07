@@ -358,12 +358,16 @@ export async function acceptListingAndCreateTrade(
     )
   }
 
-  // Create the trade
+  // Create the trade - use listing's chainId or fallback to input chainId or default
+  const tradeChainId = listing.chainId
+    ? parseInt(listing.chainId)
+    : input.chainId || 1 // Default to chainId 1 if both are missing
+
   const [trade] = await db
     .insert(trades)
     .values({
       escrowId: null, // Will be set when seller deposits (P2P) or admin confirms (domain)
-      chainId: input.chainId,
+      chainId: tradeChainId,
       buyerId: actualBuyerId,
       sellerId: actualSellerId,
       amount: input.amount,

@@ -167,7 +167,7 @@ export const acceptListingSchema = z.object({
       }
       return isValid
     }, 'Invalid payment method or token'),
-  chainId: z.number().int().positive('Chain ID is required')
+  chainId: z.number().int().positive('Chain ID is required').optional() // Made optional - will use listing's chainId
 })
 
 export type AcceptListingInput = z.infer<typeof acceptListingSchema>
