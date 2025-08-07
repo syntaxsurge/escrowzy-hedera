@@ -23,9 +23,9 @@ export const blockchainConfig: BlockchainConfig = {
       coingeckoId: 'hedera-hashgraph',
       isTestnet: true,
       contractAddresses: {
-        subscriptionManager: '0x136FCa02340048C2B9BD44425604a4eA96477065',
-        escrowCore: '0x7B8ebA26C79DF617b9e5E2523435F4BB84D73734',
-        achievementNFT: '0x13769831301eD6beB4760BEc9886D734e22C6cfA'
+        subscriptionManager: '0x5E03b2f7F16A2bC32E00374e4FfB954d5e29Db55',
+        escrowCore: '0x30F75b2308bffd9F74b84DD8C6B2938bf59e4D17',
+        achievementNFT: '0x320a5ef19efAa9b4522d6c325E62063040Ec144A'
       }
     },
     hederaMainnet: {
@@ -45,25 +45,6 @@ export const blockchainConfig: BlockchainConfig = {
         subscriptionManager: '',
         escrowCore: '',
         achievementNFT: ''
-      }
-    },
-    baseSepolia: {
-      chainId: 84532,
-      name: 'Base Sepolia',
-      rpcUrl: 'https://sepolia.base.org',
-      explorerUrl: 'https://sepolia.basescan.org',
-      logo: 'https://raw.githubusercontent.com/base/brand-kit/eba9e730be34f8c9ae7f9a21f32cc6aafebe2ad1/logo/TheSquare/Digital/Base_square_blue.svg',
-      nativeCurrency: {
-        name: 'Ethereum',
-        symbol: 'ETH',
-        decimals: 18
-      },
-      coingeckoId: 'ethereum',
-      isTestnet: true,
-      contractAddresses: {
-        subscriptionManager: '0x6e8462254076e115348248e55aDD7Ed52D44659e',
-        escrowCore: '0xCbA5077A960787574b21bfD8CfbA9F2cce1F2D44',
-        achievementNFT: '0xc799b3604aE80Aa283BDE2db97138F647EB3aBFe'
       }
     }
   }

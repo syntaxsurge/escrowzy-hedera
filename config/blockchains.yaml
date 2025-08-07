@@ -24,9 +24,9 @@ chains:
     coingeckoId: 'hedera-hashgraph'
     isTestnet: true
     contractAddresses:
-      subscriptionManager: '0x136FCa02340048C2B9BD44425604a4eA96477065'
-      escrowCore: '0x7B8ebA26C79DF617b9e5E2523435F4BB84D73734'
-      achievementNFT: '0x13769831301eD6beB4760BEc9886D734e22C6cfA'
+      subscriptionManager: '0x5E03b2f7F16A2bC32E00374e4FfB954d5e29Db55'
+      escrowCore: '0x30F75b2308bffd9F74b84DD8C6B2938bf59e4D17'
+      achievementNFT: '0x320a5ef19efAa9b4522d6c325E62063040Ec144A'
 
   # Hedera Mainnet
   hederaMainnet:
@@ -49,7 +49,7 @@ chains:
 
   # Base Sepolia
   baseSepolia:
-    enabled: true
+    enabled: false
     chainId: 84532
     name: 'Base Sepolia'
     rpcUrl: 'https://sepolia.base.org'
