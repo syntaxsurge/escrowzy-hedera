@@ -53,7 +53,8 @@ export const GET = withSubscriptionValidation(
             priceUSD: priceUSD,
             priceNative: parseFloat(formatNativeAmount(plan.priceWei, chainId)), // Convert to native units using proper decimals
             nativeCurrencySymbol: contractInfo.nativeCurrency,
-            isTeamPlan: plan.isTeamPlan
+            isTeamPlan: plan.isTeamPlan,
+            feeTierBasisPoints: plan.feeTierBasisPoints
           }
         })
     )

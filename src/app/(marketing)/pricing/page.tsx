@@ -16,7 +16,8 @@ import {
   User,
   TrendingUp,
   Hash,
-  ExternalLink
+  ExternalLink,
+  DollarSign
 } from 'lucide-react'
 import { toast } from 'sonner'
 import useSWR from 'swr'
@@ -81,6 +82,7 @@ type ContractPlan = {
   maxMembers: number | string
   isActive: boolean
   sortOrder: string | number
+  feeTierBasisPoints?: number | bigint
 }
 
 export default function PricingPage() {
@@ -1520,6 +1522,16 @@ function PricingCard({
             })}
           </p>
         )}
+        {plan.feeTierBasisPoints !== undefined &&
+          plan.feeTierBasisPoints !== null && (
+            <div className='mt-3 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 dark:bg-blue-950/20'>
+              <DollarSign className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+              <span className='text-sm font-medium text-blue-700 dark:text-blue-300'>
+                Trading Fee:{' '}
+                {(Number(plan.feeTierBasisPoints) / 100).toFixed(1)}%
+              </span>
+            </div>
+          )}
       </div>
 
       <ul className='mb-8 flex-1 space-y-3'>
