@@ -333,82 +333,6 @@ export default function CreateP2PListingPage() {
               />
 
               <div className='grid grid-cols-2 gap-4'>
-                {/* Token Selection */}
-                <FormField
-                  control={form.control}
-                  name='tokenOffered'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cryptocurrency</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select token' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.keys(supportedTokens).map(token => (
-                            <SelectItem key={token} value={token}>
-                              {token}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        The cryptocurrency you want to {listingType}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Chain Selection */}
-                <FormField
-                  control={form.control}
-                  name='chainId'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Blockchain Network</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select network' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.values(blockchainConfig.chains)
-                            .filter(chain => chain.chainId)
-                            .map(chain => (
-                              <SelectItem
-                                key={chain.chainId}
-                                value={chain.chainId.toString()}
-                              >
-                                {chain.name}
-                                {chain.isTestnet && (
-                                  <span className='text-muted-foreground ml-2 text-xs'>
-                                    (Testnet)
-                                  </span>
-                                )}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        The blockchain network for this listing
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className='grid grid-cols-2 gap-4'>
                 {/* Amount */}
                 <FormField
                   control={form.control}
@@ -597,6 +521,82 @@ export default function CreateP2PListingPage() {
               {/* Payment Configuration Section */}
               <div className='space-y-4'>
                 <h3 className='text-lg font-semibold'>Payment Configuration</h3>
+
+                <div className='grid grid-cols-2 gap-4'>
+                  {/* Token Selection */}
+                  <FormField
+                    control={form.control}
+                    name='tokenOffered'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cryptocurrency</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Select token' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.keys(supportedTokens).map(token => (
+                              <SelectItem key={token} value={token}>
+                                {token}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          The cryptocurrency you want to {listingType}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Chain Selection */}
+                  <FormField
+                    control={form.control}
+                    name='chainId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Blockchain Network</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Select network' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.values(blockchainConfig.chains)
+                              .filter(chain => chain.chainId)
+                              .map(chain => (
+                                <SelectItem
+                                  key={chain.chainId}
+                                  value={chain.chainId.toString()}
+                                >
+                                  {chain.name}
+                                  {chain.isTestnet && (
+                                    <span className='text-muted-foreground ml-2 text-xs'>
+                                      (Testnet)
+                                    </span>
+                                  )}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          The blockchain network for this listing
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 {/* Payment Window */}
                 <FormField
