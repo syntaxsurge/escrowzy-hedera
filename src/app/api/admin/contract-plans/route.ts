@@ -42,7 +42,8 @@ export const GET = withContractValidation(async ({ contractService }) => {
       features: plan.features,
       isActive: plan.isActive,
       sortOrder: plan.sortOrder, // This will be serialized below
-      isTeamPlan: plan.isTeamPlan || false
+      isTeamPlan: plan.isTeamPlan || false,
+      feeTierBasisPoints: plan.feeTierBasisPoints // This will be serialized below
     }))
   )
 
@@ -50,7 +51,10 @@ export const GET = withContractValidation(async ({ contractService }) => {
   const serializedPlans = plansWithUSDPrices.map(plan => ({
     ...plan,
     maxMembers: plan.maxMembers.toString(),
-    sortOrder: plan.sortOrder.toString()
+    sortOrder: plan.sortOrder.toString(),
+    feeTierBasisPoints: plan.feeTierBasisPoints
+      ? plan.feeTierBasisPoints.toString()
+      : undefined
   }))
 
   // Sort plans by sortOrder

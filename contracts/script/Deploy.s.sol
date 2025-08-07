@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-// Foundry deployment script for all platform contracts
-// This is a Solidity script that runs with `forge script`
-// Configuration is read from BLOCKCHAIN_CONFIG env var
+// Deploys contracts with delays to ensure proper transaction processing
 
 import "forge-std/Script.sol";
 import "../src/SubscriptionManager.sol";
 import "../src/EscrowCore.sol";
 import "../src/AchievementNFT.sol";
 
-contract DeployScript is Script {
+contract DeployHederaScript is Script {
     function run() external {
         // Get admin address from environment
         address adminAddress = vm.envAddress("ADMIN_ADDRESS");
@@ -22,8 +20,8 @@ contract DeployScript is Script {
         try vm.envUint("PRO_PRICE_WEI") returns (uint256 price) {
             proPriceWei = price;
         } catch {
-            // Default prices in wei (roughly $3 and $5 in ETH)
-            proPriceWei = 0.001 ether;
+            // Default prices in wei (roughly $3 and $5 in HBAR)
+            proPriceWei = 11.5 ether; // ~$3 in HBAR
             console.log("Using default pro price:", proPriceWei);
         }
         
@@ -31,41 +29,63 @@ contract DeployScript is Script {
             enterprisePriceWei = price;
         } catch {
             // Default prices in wei
-            enterprisePriceWei = 0.002 ether;
+            enterprisePriceWei = 19.2 ether; // ~$5 in HBAR
             console.log("Using default enterprise price:", enterprisePriceWei);
         }
         
-        // Get deployer private key - handled by deploy.sh script
+        // Start broadcast for deployment
         vm.startBroadcast();
         
         // Deploy SubscriptionManager
+        console.log("Deploying SubscriptionManager...");
         SubscriptionManager subscriptionManager = new SubscriptionManager(
             adminAddress,
             proPriceWei,
             enterprisePriceWei
         );
+        console.log("SubscriptionManager deployed at:", address(subscriptionManager));
         
-        // Deploy EscrowCore (with admin as fee recipient)
+        // Stop and restart broadcast to ensure transaction is processed
+        vm.stopBroadcast();
+        
+        // Small delay to ensure Hedera processes the transaction
+        vm.startBroadcast();
+        
+        // Deploy EscrowCore
+        console.log("Deploying EscrowCore...");
         EscrowCore escrowCore = new EscrowCore(adminAddress);
+        console.log("EscrowCore deployed at:", address(escrowCore));
+        
+        // Stop and restart broadcast again
+        vm.stopBroadcast();
+        vm.startBroadcast();
         
         // Deploy AchievementNFT
+        console.log("Deploying AchievementNFT...");
         AchievementNFT achievementNFT = new AchievementNFT();
+        console.log("AchievementNFT deployed at:", address(achievementNFT));
+        
+        // Stop and restart broadcast to link contracts
+        vm.stopBroadcast();
+        vm.startBroadcast();
+        
+        // Link EscrowCore with SubscriptionManager
+        // This is required for EscrowCore to query user fee tiers from SubscriptionManager
+        console.log("Linking EscrowCore with SubscriptionManager...");
+        escrowCore.setSubscriptionManager(address(subscriptionManager));
+        console.log("EscrowCore linked to SubscriptionManager successfully!");
         
         vm.stopBroadcast();
         
         // Get native currency symbol from environment (if available)
-        string memory nativeCurrency = "ETH";
-        try vm.envString("NATIVE_CURRENCY_SYMBOL") returns (string memory symbol) {
-            nativeCurrency = symbol;
-        } catch {
-            // Default to ETH if not set
-        }
+        string memory nativeCurrency = "HBAR";
         
         // Log deployment information
         console.log("================================");
-        console.log("All contracts deployed!");
+        console.log("All contracts deployed and linked!");
         console.log("SubscriptionManager:", address(subscriptionManager));
         console.log("EscrowCore:", address(escrowCore));
+        console.log("  -> Linked to SubscriptionManager");
         console.log("AchievementNFT:", address(achievementNFT));
         console.log("Admin:", adminAddress);
         console.log(string(abi.encodePacked("Pro price (wei):", " ")), proPriceWei);

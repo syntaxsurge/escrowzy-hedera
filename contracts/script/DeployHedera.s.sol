@@ -66,6 +66,16 @@ contract DeployHederaScript is Script {
         AchievementNFT achievementNFT = new AchievementNFT();
         console.log("AchievementNFT deployed at:", address(achievementNFT));
         
+        // Stop and restart broadcast to link contracts
+        vm.stopBroadcast();
+        vm.startBroadcast();
+        
+        // Link EscrowCore with SubscriptionManager
+        // This is required for EscrowCore to query user fee tiers from SubscriptionManager
+        console.log("Linking EscrowCore with SubscriptionManager...");
+        escrowCore.setSubscriptionManager(address(subscriptionManager));
+        console.log("EscrowCore linked to SubscriptionManager successfully!");
+        
         vm.stopBroadcast();
         
         // Get native currency symbol from environment (if available)
@@ -73,9 +83,10 @@ contract DeployHederaScript is Script {
         
         // Log deployment information
         console.log("================================");
-        console.log("All contracts deployed!");
+        console.log("All contracts deployed and linked!");
         console.log("SubscriptionManager:", address(subscriptionManager));
         console.log("EscrowCore:", address(escrowCore));
+        console.log("  -> Linked to SubscriptionManager");
         console.log("AchievementNFT:", address(achievementNFT));
         console.log("Admin:", adminAddress);
         console.log(string(abi.encodePacked("Pro price (wei):", " ")), proPriceWei);

@@ -425,9 +425,11 @@ export function SubscriptionManager() {
       isActive: plan.isActive,
       sortOrder: plan.sortOrder,
       isTeamPlan: plan.isTeamPlan,
-      feeTierPercentage: plan.feeTierBasisPoints
-        ? (Number(plan.feeTierBasisPoints) / 100).toString()
-        : '2.5'
+      feeTierPercentage:
+        plan.feeTierBasisPoints !== undefined &&
+        plan.feeTierBasisPoints !== null
+          ? (Number(plan.feeTierBasisPoints) / 100).toString()
+          : ''
     })
     setEditingPlan(plan.planKey)
   }
@@ -1169,9 +1171,10 @@ export function SubscriptionManager() {
                             <DollarSign className='text-muted-foreground h-4 w-4' />
                             <span className='text-foreground text-sm'>
                               Trading Fee:{' '}
-                              {plan.feeTierBasisPoints
+                              {plan.feeTierBasisPoints !== undefined &&
+                              plan.feeTierBasisPoints !== null
                                 ? `${(Number(plan.feeTierBasisPoints) / 100).toFixed(1)}%`
-                                : '2.5%'}
+                                : 'Not set'}
                             </span>
                           </div>
 

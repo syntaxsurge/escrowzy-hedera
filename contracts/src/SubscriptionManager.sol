@@ -119,10 +119,9 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
     /// @dev Initialize default plans during deployment
     function _createDefaultPlans(uint256 priceWeiPro, uint256 priceWeiEnterprise) internal {
         // Free Plan (planKey = 0)
-        string[] memory freeFeatures = new string[](3);
-        freeFeatures[0] = "2.5% P2P trading fee";
-        freeFeatures[1] = "Basic escrow protection";
-        freeFeatures[2] = "Community support";
+        string[] memory freeFeatures = new string[](2);
+        freeFeatures[0] = "Basic escrow protection";
+        freeFeatures[1] = "Community support";
         
         plans[0] = Plan({
             planKey: 0,
@@ -141,11 +140,10 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         planExists[0] = true;
 
         // Pro Plan (planKey = 1)
-        string[] memory proFeatures = new string[](4);
-        proFeatures[0] = "2.0% P2P trading fee (20% discount)";
-        proFeatures[1] = "Priority dispute resolution";
-        proFeatures[2] = "Advanced escrow features";
-        proFeatures[3] = "Priority support";
+        string[] memory proFeatures = new string[](3);
+        proFeatures[0] = "Priority dispute resolution";
+        proFeatures[1] = "Advanced escrow features";
+        proFeatures[2] = "Priority support";
         
         plans[1] = Plan({
             planKey: 1,
@@ -164,12 +162,11 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         planExists[1] = true;
 
         // Enterprise Plan (planKey = 2)
-        string[] memory enterpriseFeatures = new string[](5);
-        enterpriseFeatures[0] = "1.5% P2P trading fee (40% discount)";
-        enterpriseFeatures[1] = "API access for integrations";
-        enterpriseFeatures[2] = "24/7 premium support";
-        enterpriseFeatures[3] = "Priority dispute resolution";
-        enterpriseFeatures[4] = "Custom smart contract features";
+        string[] memory enterpriseFeatures = new string[](4);
+        enterpriseFeatures[0] = "API access for integrations";
+        enterpriseFeatures[1] = "24/7 premium support";
+        enterpriseFeatures[2] = "Priority dispute resolution";
+        enterpriseFeatures[3] = "Custom smart contract features";
         
         plans[2] = Plan({
             planKey: 2,
@@ -188,12 +185,11 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         planExists[2] = true;
         
         // Team Pro Plan (planKey = 3)
-        string[] memory teamProFeatures = new string[](5);
-        teamProFeatures[0] = "2.0% P2P trading fee for all members";
-        teamProFeatures[1] = "Shared escrow management";
-        teamProFeatures[2] = "Team dispute resolution";
-        teamProFeatures[3] = "Consolidated billing";
-        teamProFeatures[4] = "Team activity tracking";
+        string[] memory teamProFeatures = new string[](4);
+        teamProFeatures[0] = "Shared escrow management";
+        teamProFeatures[1] = "Team dispute resolution";
+        teamProFeatures[2] = "Consolidated billing";
+        teamProFeatures[3] = "Team activity tracking";
         
         plans[3] = Plan({
             planKey: 3,
@@ -213,13 +209,12 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         planPriceWei[3] = priceWeiPro * 3;
         
         // Team Enterprise Plan (planKey = 4)
-        string[] memory teamEnterpriseFeatures = new string[](6);
-        teamEnterpriseFeatures[0] = "1.5% P2P trading fee for all members";
-        teamEnterpriseFeatures[1] = "Unlimited team members";
-        teamEnterpriseFeatures[2] = "Team API access";
-        teamEnterpriseFeatures[3] = "White-label options";
-        teamEnterpriseFeatures[4] = "Dedicated team support";
-        teamEnterpriseFeatures[5] = "Custom contract deployment";
+        string[] memory teamEnterpriseFeatures = new string[](5);
+        teamEnterpriseFeatures[0] = "Unlimited team members";
+        teamEnterpriseFeatures[1] = "Team API access";
+        teamEnterpriseFeatures[2] = "White-label options";
+        teamEnterpriseFeatures[3] = "Dedicated team support";
+        teamEnterpriseFeatures[4] = "Custom contract deployment";
         
         plans[4] = Plan({
             planKey: 4,

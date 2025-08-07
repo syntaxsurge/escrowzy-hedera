@@ -27,6 +27,7 @@ interface ContractPlan {
   isActive: boolean
   sortOrder: bigint
   isTeamPlan: boolean
+  feeTierBasisPoints: bigint
 }
 
 export interface CreatePlanParams {
@@ -40,6 +41,7 @@ export interface CreatePlanParams {
   isActive: boolean
   sortOrder: number
   isTeamPlan: boolean
+  feeTierBasisPoints: number
 }
 
 interface ContractEarnings {
@@ -144,7 +146,8 @@ export class ContractPlanService {
         features: plan.features,
         isActive: plan.isActive,
         sortOrder: plan.sortOrder,
-        isTeamPlan: plan.isTeamPlan || false
+        isTeamPlan: plan.isTeamPlan || false,
+        feeTierBasisPoints: plan.feeTierBasisPoints
       }))
     } catch (_error) {
       // If getAllPlans is not available, fallback to getAllActivePlans
@@ -165,7 +168,8 @@ export class ContractPlanService {
         features: plan.features,
         isActive: plan.isActive,
         sortOrder: plan.sortOrder,
-        isTeamPlan: plan.isTeamPlan || false
+        isTeamPlan: plan.isTeamPlan || false,
+        feeTierBasisPoints: plan.feeTierBasisPoints
       }))
     } catch (error) {
       throw error
@@ -185,7 +189,8 @@ export class ContractPlanService {
         features: plan.features,
         isActive: plan.isActive,
         sortOrder: plan.sortOrder,
-        isTeamPlan: plan.isTeamPlan || false
+        isTeamPlan: plan.isTeamPlan || false,
+        feeTierBasisPoints: plan.feeTierBasisPoints
       }
     } catch (error) {
       throw error
@@ -210,7 +215,8 @@ export class ContractPlanService {
         params.features,
         params.isActive,
         params.sortOrder,
-        params.isTeamPlan
+        params.isTeamPlan,
+        params.feeTierBasisPoints
       )
 
       await tx.wait()
@@ -238,7 +244,8 @@ export class ContractPlanService {
         params.features,
         params.isActive,
         params.sortOrder,
-        params.isTeamPlan
+        params.isTeamPlan,
+        params.feeTierBasisPoints
       )
 
       await tx.wait()
