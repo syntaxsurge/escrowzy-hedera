@@ -71,8 +71,8 @@ export function useEscrow() {
       }
 
       try {
-        // Get fee percentage based on user's tier
-        const feePercentage = await calculateFeePercentage(params.seller)
+        // Get fee percentage based on buyer's tier (msg.sender in contract)
+        const feePercentage = await calculateFeePercentage(address)
 
         // Calculate all amounts with proper decimal handling for each chain
         const amounts = calculateEscrowAmounts(
@@ -442,8 +442,8 @@ export function useEscrow() {
         const amountsForContract: bigint[] = []
 
         for (let i = 0; i < params.amounts.length; i++) {
-          // Get fee percentage based on seller's tier
-          const feePercentage = await calculateFeePercentage(params.sellers[i])
+          // Get fee percentage based on buyer's tier (msg.sender in contract)
+          const feePercentage = await calculateFeePercentage(address)
 
           // Calculate amounts with proper decimal handling for each chain
           const amounts = calculateEscrowAmounts(

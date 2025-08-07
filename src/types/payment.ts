@@ -15,6 +15,7 @@ export interface PaymentIntent {
     currency: string
     features?: string[]
     maxMembers?: number
+    feeTierBasisPoints?: number
   }
   network: {
     id: number

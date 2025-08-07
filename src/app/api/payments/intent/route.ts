@@ -59,7 +59,10 @@ export async function POST(request: NextRequest) {
       priceWei: plan.priceWei, // Pass the original Wei amount
       isTeamPlan: plan.isTeamPlan || plan.name.toLowerCase().includes('team'),
       features: plan.features,
-      maxMembers: Number(plan.maxMembers)
+      maxMembers: Number(plan.maxMembers),
+      feeTierBasisPoints: plan.feeTierBasisPoints
+        ? Number(plan.feeTierBasisPoints)
+        : undefined
     }
 
     const paymentIntent = await createPaymentIntent(

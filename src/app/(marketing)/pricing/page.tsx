@@ -741,7 +741,8 @@ export default function PricingPage() {
                 maxMembers: paymentModal.data.plan.maxMembers || 1,
                 isActive: true,
                 sortOrder: 0,
-                isTeamPlan: verificationData?.isTeamPlan || false
+                isTeamPlan: verificationData?.isTeamPlan || false,
+                feeTierBasisPoints: paymentModal.data.plan.feeTierBasisPoints
               }
 
               // Set the data first
@@ -1308,15 +1309,19 @@ export default function PricingPage() {
                 </p>
               </div>
               <ul className='space-y-2'>
-                {welcomeDialog.data?.plan.features.map((feature, index) => (
-                  <li
-                    key={index}
-                    className='flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300'
-                  >
-                    <Check className='mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400' />
-                    <span>{feature}</span>
-                  </li>
-                ))}
+                {welcomeDialog.data?.plan.feeTierBasisPoints !== undefined &&
+                  welcomeDialog.data?.plan.feeTierBasisPoints !== null && (
+                    <li className='flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300'>
+                      <Check className='mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400' />
+                      <span>
+                        {(
+                          Number(welcomeDialog.data.plan.feeTierBasisPoints) /
+                          100
+                        ).toFixed(1)}
+                        % trading fee
+                      </span>
+                    </li>
+                  )}
                 <li className='flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300'>
                   <Check className='mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400' />
                   <span>
@@ -1327,6 +1332,15 @@ export default function PricingPage() {
                     )}
                   </span>
                 </li>
+                {welcomeDialog.data?.plan.features.map((feature, index) => (
+                  <li
+                    key={index}
+                    className='flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300'
+                  >
+                    <Check className='mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400' />
+                    <span>{feature}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 
@@ -1528,7 +1542,8 @@ function PricingCard({
               <div className='flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 dark:bg-blue-950/20'>
                 <DollarSign className='h-4 w-4 text-blue-600 dark:text-blue-400' />
                 <span className='text-sm font-medium text-blue-700 dark:text-blue-300'>
-                  {(Number(plan.feeTierBasisPoints) / 100).toFixed(1)}% trading fee
+                  {(Number(plan.feeTierBasisPoints) / 100).toFixed(1)}% trading
+                  fee
                 </span>
               </div>
             )}

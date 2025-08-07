@@ -227,38 +227,6 @@ export default function CreateDomainListingPage() {
                   )}
                 />
 
-                {/* Cryptocurrency Selection */}
-                <FormField
-                  control={form.control}
-                  name='tokenOffered'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Accepted Cryptocurrency</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select cryptocurrency' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.keys(supportedTokens).map(token => (
-                            <SelectItem key={token} value={token}>
-                              {token}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        The cryptocurrency buyers must pay to the smart contract
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <div className='grid grid-cols-2 gap-4'>
                   {/* Price */}
                   <FormField
