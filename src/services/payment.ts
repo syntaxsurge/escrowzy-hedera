@@ -82,6 +82,7 @@ export async function createPaymentIntent(
   // If priceWei is provided, use it directly (avoiding double conversion)
   if (planDetails.priceWei !== undefined) {
     amountWei = planDetails.priceWei
+
     // Get current crypto price for display purposes
     const priceResult = await getCachedPrice(network.coingeckoId, {
       symbol: network.nativeCurrency,
@@ -91,6 +92,7 @@ export async function createPaymentIntent(
       throw new Error('Invalid price data')
     }
     cryptoPrice = priceResult.price
+
     // Calculate the crypto amount for display
     amount = formatNativeAmount(amountWei, networkId)
   } else {

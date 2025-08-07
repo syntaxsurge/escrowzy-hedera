@@ -23,9 +23,9 @@ export const blockchainConfig: BlockchainConfig = {
       coingeckoId: 'hedera-hashgraph',
       isTestnet: true,
       contractAddresses: {
-        subscriptionManager: '0xE2529987b1F00a76A1978A2484c6232E301Fe81C',
-        escrowCore: '0x713838410E21064F7640bef32A34449A27Cf5dC9',
-        achievementNFT: '0x2d7699713BF2B1857Bb67982e4B38d98723EB2cF'
+        subscriptionManager: '0x136FCa02340048C2B9BD44425604a4eA96477065',
+        escrowCore: '0x7B8ebA26C79DF617b9e5E2523435F4BB84D73734',
+        achievementNFT: '0x13769831301eD6beB4760BEc9886D734e22C6cfA'
       }
     },
     hederaMainnet: {

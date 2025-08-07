@@ -295,6 +295,24 @@ async function getClientSafePrice(
 }
 
 /**
+ * Get subscription payment amount for transaction value
+ * Handles Hedera's special case where JSON-RPC converts msg.value from 18 to 8 decimals
+ *
+ * @param amount - The amount as a string (e.g., "100.5")
+ * @param chainId - The chain ID
+ * @returns The transaction value for msg.value
+ */
+export function getSubscriptionAmount(amount: string, chainId: number): bigint {
+  if (isHederaChain(chainId)) {
+    // For Hedera: Transaction value needs 18 decimals (will be converted by JSON-RPC to 8)
+    return parseUnits(amount, 18)
+  }
+
+  // For all other chains, use native decimals
+  return parseNativeAmount(amount, chainId)
+}
+
+/**
  * Convert USD amount to native token smallest unit (wei, tinybar, etc.)
  * Client-safe version that fetches prices from API
  *

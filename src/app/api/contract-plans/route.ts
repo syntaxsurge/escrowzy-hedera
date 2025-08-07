@@ -1,5 +1,5 @@
 import { withSubscriptionValidation } from '@/lib/blockchain/contract-validation'
-import { convertWeiToUSD } from '@/lib/utils/token-helpers'
+import { convertWeiToUSD, formatNativeAmount } from '@/lib/utils/token-helpers'
 
 // GET /api/contract-plans - Get active plans from smart contract for public use
 export const GET = withSubscriptionValidation(
@@ -51,7 +51,7 @@ export const GET = withSubscriptionValidation(
             planKey: plan.planKey,
             priceWei: plan.priceWei.toString(),
             priceUSD: priceUSD,
-            priceNative: Number(plan.priceWei) / 1e18, // Convert wei to native units
+            priceNative: parseFloat(formatNativeAmount(plan.priceWei, chainId)), // Convert to native units using proper decimals
             nativeCurrencySymbol: contractInfo.nativeCurrency,
             isTeamPlan: plan.isTeamPlan
           }

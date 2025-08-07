@@ -9,6 +9,8 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 /// @title SubscriptionManager
 /// @notice Accepts native currency payments to activate or extend a team's subscription.
 contract SubscriptionManager is AccessControl, ReentrancyGuard {
+    // Custom errors for better gas efficiency and debugging
+    error IncorrectPaymentAmount(uint256 received, uint256 expected);
     /* -------------------------------------------------------------------------- */
     /*                                   ROLES                                    */
     /* -------------------------------------------------------------------------- */
@@ -394,7 +396,9 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
     function paySubscription(address team, uint8 planKey) external payable {
         uint256 price = planPriceWei[planKey];
         require(price > 0, "Subscription: unknown plan");
-        require(msg.value == price, "Subscription: incorrect payment");
+        if (msg.value != price) {
+            revert IncorrectPaymentAmount(msg.value, price);
+        }
 
         uint256 startTime = _paidUntil[team] > block.timestamp ? _paidUntil[team] : block.timestamp;
         uint256 newExpiry = startTime + PERIOD;
@@ -428,7 +432,9 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         require(supportedTokens[token], "Subscription: token not supported");
         uint256 price = planPriceWei[planKey];
         require(price > 0, "Subscription: unknown plan");
-        require(amount == price, "Subscription: incorrect payment");
+        if (amount != price) {
+            revert IncorrectPaymentAmount(amount, price);
+        }
 
         uint256 startTime = _paidUntil[team] > block.timestamp ? _paidUntil[team] : block.timestamp;
         uint256 newExpiry = startTime + PERIOD;

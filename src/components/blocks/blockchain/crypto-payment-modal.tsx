@@ -24,6 +24,10 @@ import { api } from '@/lib/api/http-client'
 import { buildTxUrl } from '@/lib/blockchain'
 import { formatCurrency } from '@/lib/utils/string'
 import { formatTeamMemberLimit } from '@/lib/utils/subscription'
+import {
+  getSubscriptionAmount,
+  formatNativeAmount
+} from '@/lib/utils/token-helpers'
 import { SubscriptionManagerService } from '@/services/blockchain/subscription-manager.service'
 import { type PaymentIntent } from '@/types/payment'
 
@@ -47,7 +51,6 @@ export function CryptoPaymentModal({
   const [wasOpen, setWasOpen] = useState(false)
 
   const { address } = useUnifiedWalletInfo()
-  const [paymentError, setPaymentError] = useState<string | null>(null)
   const { executeTransaction, isExecuting, transactionHash, reset } =
     useTransaction({
       onSuccess: async hash => {
@@ -55,7 +58,7 @@ export function CryptoPaymentModal({
       },
       onError: error => {
         setStep('failed')
-        setPaymentError(error.message || 'Transaction failed')
+        console.error('Payment error:', error.message || 'Transaction failed')
       },
       onStatusChange: status => {
         // Update UI based on transaction status
@@ -87,7 +90,6 @@ export function CryptoPaymentModal({
       // Modal is being opened for the first time
       setStep('confirm')
       setVerificationData(null)
-      setPaymentError(null)
       reset()
       setWasOpen(true)
     } else if (!isOpen && wasOpen) {
@@ -135,10 +137,20 @@ export function CryptoPaymentModal({
       const subscriptionService = new SubscriptionManagerService(
         paymentIntent.networkId
       )
+
+      const nativeAmount = formatNativeAmount(
+        BigInt(paymentIntent.amountWei),
+        paymentIntent.networkId
+      )
+      const transactionValue = getSubscriptionAmount(
+        nativeAmount,
+        paymentIntent.networkId
+      )
+
       const config = subscriptionService.getTransactionConfig(
         'paySubscription',
         [address as `0x${string}`, paymentIntent.planKey],
-        BigInt(paymentIntent.amountWei)
+        transactionValue
       )
 
       await executeTransaction(config, {
@@ -164,7 +176,6 @@ export function CryptoPaymentModal({
 
   const handleRetry = () => {
     setStep('confirm')
-    setPaymentError(null)
     reset()
   }
 

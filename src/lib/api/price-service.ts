@@ -21,7 +21,7 @@ export interface PriceResult {
 
 export interface PriceServiceOptions {
   symbol?: string // Trading symbol (e.g., ETH, BTC, HBAR)
-  coingeckoId?: string // CoinGecko ID (e.g., ethereum, bitcoin, hedera-hashgraph)
+  coingeckoId?: string // CoinGecko ID (e.g., ethereum, bitcoin)
   apiKeys?: {
     coingecko?: string
     cryptocompare?: string
