@@ -11,6 +11,18 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 contract SubscriptionManager is AccessControl, ReentrancyGuard {
     // Custom errors for better gas efficiency and debugging
     error IncorrectPaymentAmount(uint256 received, uint256 expected);
+    error PlanNotFound(uint8 planKey);
+    error PlanAlreadyExists(uint8 planKey);
+    error InvalidAddress(address provided);
+    error InsufficientEarnings(uint256 requested, uint256 available);
+    error InvalidWithdrawalAmount();
+    error TokenNotSupported(address token);
+    error InvalidRange(uint256 startIndex, uint256 endIndex);
+    error IndexOutOfBounds(uint256 index, uint256 length);
+    error EmptyName(string field);
+    error CannotDeleteFreePlan();
+    error WithdrawalFailed();
+    error TransferFailed();
     /* -------------------------------------------------------------------------- */
     /*                                   ROLES                                    */
     /* -------------------------------------------------------------------------- */
@@ -242,7 +254,9 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
 
     /// @notice Update the wei price for a given plan.
     function setPlanPrice(uint8 planKey, uint256 newPriceWei) external onlyRole(ADMIN_ROLE) {
-        require(planExists[planKey], "Subscription: plan does not exist");
+        if (!planExists[planKey]) {
+            revert PlanNotFound(planKey);
+        }
         planPriceWei[planKey] = newPriceWei;
         plans[planKey].priceWei = newPriceWei;
         emit PlanUpdated(planKey, plans[planKey].name, newPriceWei);
@@ -262,9 +276,15 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         bool isTeamPlan,
         uint256 feeTierBasisPoints
     ) external onlyRole(ADMIN_ROLE) {
-        require(!planExists[planKey], "Subscription: plan already exists");
-        require(bytes(name).length > 0, "Subscription: name cannot be empty");
-        require(bytes(displayName).length > 0, "Subscription: display name cannot be empty");
+        if (planExists[planKey]) {
+            revert PlanAlreadyExists(planKey);
+        }
+        if (bytes(name).length == 0) {
+            revert EmptyName("name");
+        }
+        if (bytes(displayName).length == 0) {
+            revert EmptyName("displayName");
+        }
 
         plans[planKey] = Plan({
             planKey: planKey,
@@ -301,9 +321,15 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
         bool isTeamPlan,
         uint256 feeTierBasisPoints
     ) external onlyRole(ADMIN_ROLE) {
-        require(planExists[planKey], "Subscription: plan does not exist");
-        require(bytes(name).length > 0, "Subscription: name cannot be empty");
-        require(bytes(displayName).length > 0, "Subscription: display name cannot be empty");
+        if (!planExists[planKey]) {
+            revert PlanNotFound(planKey);
+        }
+        if (bytes(name).length == 0) {
+            revert EmptyName("name");
+        }
+        if (bytes(displayName).length == 0) {
+            revert EmptyName("displayName");
+        }
 
         plans[planKey].name = name;
         plans[planKey].displayName = displayName;
@@ -323,8 +349,12 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
 
     /// @notice Delete a subscription plan
     function deletePlan(uint8 planKey) external onlyRole(ADMIN_ROLE) {
-        require(planExists[planKey], "Subscription: plan does not exist");
-        require(planKey != 0, "Subscription: cannot delete free plan");
+        if (!planExists[planKey]) {
+            revert PlanNotFound(planKey);
+        }
+        if (planKey == 0) {
+            revert CannotDeleteFreePlan();
+        }
 
         // Remove from planKeys array
         for (uint256 i = 0; i < planKeys.length; i++) {
@@ -344,39 +374,60 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
 
     /// @notice Add or remove support for an ERC20 token
     function setSupportedToken(address token, bool supported) external onlyRole(ADMIN_ROLE) {
-        require(token != address(0), "Subscription: invalid token address");
+        if (token == address(0)) {
+            revert InvalidAddress(token);
+        }
         supportedTokens[token] = supported;
         emit TokenSupportUpdated(token, supported);
     }
 
     /// @notice Withdraw native currency earnings to specified address
     function withdrawEarnings(address payable to, uint256 amount) external onlyRole(ADMIN_ROLE) nonReentrant {
-        require(to != address(0), "Subscription: invalid withdrawal address");
-        require(amount > 0, "Subscription: withdrawal amount must be positive");
+        if (to == address(0)) {
+            revert InvalidAddress(to);
+        }
+        if (amount == 0) {
+            revert InvalidWithdrawalAmount();
+        }
         
         uint256 available = totalEarnings - totalWithdrawn;
-        require(amount <= available, "Subscription: insufficient earnings");
+        if (amount > available) {
+            revert InsufficientEarnings(amount, available);
+        }
         
         totalWithdrawn += amount;
         
         (bool success, ) = to.call{value: amount}("");
-        require(success, "Subscription: withdrawal failed");
+        if (!success) {
+            revert WithdrawalFailed();
+        }
         
         emit EarningsWithdrawn(to, amount, address(0));
     }
 
     /// @notice Withdraw ERC20 token earnings to specified address
     function withdrawTokenEarnings(address token, address to, uint256 amount) external onlyRole(ADMIN_ROLE) nonReentrant {
-        require(token != address(0), "Subscription: invalid token address");
-        require(to != address(0), "Subscription: invalid withdrawal address");
-        require(amount > 0, "Subscription: withdrawal amount must be positive");
+        if (token == address(0)) {
+            revert InvalidAddress(token);
+        }
+        if (to == address(0)) {
+            revert InvalidAddress(to);
+        }
+        if (amount == 0) {
+            revert InvalidWithdrawalAmount();
+        }
         
         uint256 available = tokenEarnings[token] - tokenWithdrawn[token];
-        require(amount <= available, "Subscription: insufficient token earnings");
+        if (amount > available) {
+            revert InsufficientEarnings(amount, available);
+        }
         
         tokenWithdrawn[token] += amount;
         
-        IERC20(token).transfer(to, amount);
+        bool success = IERC20(token).transfer(to, amount);
+        if (!success) {
+            revert TransferFailed();
+        }
         
         emit EarningsWithdrawn(to, amount, token);
     }
@@ -395,7 +446,9 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
      */
     function paySubscription(address team, uint8 planKey) external payable {
         uint256 price = planPriceWei[planKey];
-        require(price > 0, "Subscription: unknown plan");
+        if (price == 0 && !planExists[planKey]) {
+            revert PlanNotFound(planKey);
+        }
         if (msg.value != price) {
             revert IncorrectPaymentAmount(msg.value, price);
         }
@@ -429,9 +482,13 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
      * @param amount   Amount of tokens to pay
      */
     function paySubscriptionWithToken(address team, uint8 planKey, address token, uint256 amount) external {
-        require(supportedTokens[token], "Subscription: token not supported");
+        if (!supportedTokens[token]) {
+            revert TokenNotSupported(token);
+        }
         uint256 price = planPriceWei[planKey];
-        require(price > 0, "Subscription: unknown plan");
+        if (price == 0 && !planExists[planKey]) {
+            revert PlanNotFound(planKey);
+        }
         if (amount != price) {
             revert IncorrectPaymentAmount(amount, price);
         }
@@ -486,14 +543,20 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
 
     /// @return Earning record at specific index
     function getEarningRecord(uint256 index) external view returns (EarningRecord memory) {
-        require(index < earningRecords.length, "Subscription: index out of bounds");
+        if (index >= earningRecords.length) {
+            revert IndexOutOfBounds(index, earningRecords.length);
+        }
         return earningRecords[index];
     }
 
     /// @return Multiple earning records within a range
     function getEarningRecords(uint256 startIndex, uint256 endIndex) external view returns (EarningRecord[] memory) {
-        require(startIndex <= endIndex, "Subscription: invalid range");
-        require(endIndex < earningRecords.length, "Subscription: end index out of bounds");
+        if (startIndex > endIndex) {
+            revert InvalidRange(startIndex, endIndex);
+        }
+        if (endIndex >= earningRecords.length) {
+            revert IndexOutOfBounds(endIndex, earningRecords.length);
+        }
         
         uint256 length = endIndex - startIndex + 1;
         EarningRecord[] memory records = new EarningRecord[](length);
@@ -534,7 +597,9 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
     /// @param planKey The plan key to retrieve
     /// @return Plan details
     function getPlan(uint8 planKey) external view returns (Plan memory) {
-        require(planExists[planKey], "Subscription: plan does not exist");
+        if (!planExists[planKey]) {
+            revert PlanNotFound(planKey);
+        }
         return plans[planKey];
     }
 
@@ -587,7 +652,9 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
     /// @param planKey The plan key
     /// @return Array of feature strings
     function getPlanFeatures(uint8 planKey) external view returns (string[] memory) {
-        require(planExists[planKey], "Subscription: plan does not exist");
+        if (!planExists[planKey]) {
+            revert PlanNotFound(planKey);
+        }
         return plans[planKey].features;
     }
 
@@ -595,7 +662,9 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
     /// @param planKey The plan key
     /// @return Fee tier in basis points (e.g., 250 = 2.5%)
     function getPlanFeeTier(uint8 planKey) external view returns (uint256) {
-        require(planExists[planKey], "Subscription: plan does not exist");
+        if (!planExists[planKey]) {
+            revert PlanNotFound(planKey);
+        }
         return plans[planKey].feeTierBasisPoints;
     }
 
@@ -608,7 +677,9 @@ contract SubscriptionManager is AccessControl, ReentrancyGuard {
             return plans[_activePlan[team]].feeTierBasisPoints;
         }
         // Return free tier for users without active subscription
-        require(planExists[0], "Free plan not configured");
+        if (!planExists[0]) {
+            revert PlanNotFound(0);
+        }
         return plans[0].feeTierBasisPoints;
     }
 

@@ -9,6 +9,18 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Pausable, AccessControl {
+    // Custom errors for better gas efficiency and debugging
+    error AchievementAlreadyExists(string achievementId);
+    error AchievementNotFound(string achievementId);
+    error AchievementNotActive(string achievementId);
+    error UserAlreadyHasAchievement(address user, string achievementId);
+    error RequirementNotMet(uint256 currentProgress, uint256 requiredProgress);
+    error InvalidAchievementId();
+    error InvalidName();
+    error InvalidArrayLengths(uint256 expected, uint256 received);
+    error TokenNotOwned(address user, uint256 tokenId);
+    error NotAuthorizedApprover(address caller);
+    
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     
     uint256 private _tokenIdCounter;
@@ -103,9 +115,15 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         uint256 requirement,
         string memory metadataURI
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(!achievements[achievementId].exists, "Achievement already exists");
-        require(bytes(achievementId).length > 0, "Achievement ID cannot be empty");
-        require(bytes(name).length > 0, "Name cannot be empty");
+        if (achievements[achievementId].exists) {
+            revert AchievementAlreadyExists(achievementId);
+        }
+        if (bytes(achievementId).length == 0) {
+            revert InvalidAchievementId();
+        }
+        if (bytes(name).length == 0) {
+            revert InvalidName();
+        }
         
         achievements[achievementId] = Achievement({
             id: achievementId,
@@ -137,14 +155,23 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         string memory achievementId
     ) public onlyRole(MINTER_ROLE) whenNotPaused returns (uint256) {
         Achievement memory achievement = achievements[achievementId];
-        require(achievement.exists, "Achievement does not exist");
-        require(achievement.active, "Achievement is not active");
-        require(!hasAchievement(user, achievementId), "User already has this achievement");
+        if (!achievement.exists) {
+            revert AchievementNotFound(achievementId);
+        }
+        if (!achievement.active) {
+            revert AchievementNotActive(achievementId);
+        }
+        if (hasAchievement(user, achievementId)) {
+            revert UserAlreadyHasAchievement(user, achievementId);
+        }
         
         // Check if user meets requirements
         uint256 requirement = achievementRequirements[achievementId];
         if (requirement > 0) {
-            require(userProgress[user][achievementId] >= requirement, "User has not met requirements");
+            uint256 progress = userProgress[user][achievementId];
+            if (progress < requirement) {
+                revert RequirementNotMet(progress, requirement);
+            }
         }
         
         _tokenIdCounter++;
@@ -194,8 +221,12 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         string memory achievementId,
         uint256 progress
     ) external onlyRole(MINTER_ROLE) {
-        require(achievements[achievementId].exists, "Achievement does not exist");
-        require(!hasAchievement(user, achievementId), "User already has this achievement");
+        if (!achievements[achievementId].exists) {
+            revert AchievementNotFound(achievementId);
+        }
+        if (hasAchievement(user, achievementId)) {
+            revert UserAlreadyHasAchievement(user, achievementId);
+        }
         
         userProgress[user][achievementId] = progress;
         uint256 requirement = achievementRequirements[achievementId];
@@ -213,8 +244,12 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         string memory achievementId,
         uint256 amount
     ) external onlyRole(MINTER_ROLE) {
-        require(achievements[achievementId].exists, "Achievement does not exist");
-        require(!hasAchievement(user, achievementId), "User already has this achievement");
+        if (!achievements[achievementId].exists) {
+            revert AchievementNotFound(achievementId);
+        }
+        if (hasAchievement(user, achievementId)) {
+            revert UserAlreadyHasAchievement(user, achievementId);
+        }
         
         uint256 currentProgress = userProgress[user][achievementId];
         uint256 newProgress = currentProgress + amount;
@@ -252,7 +287,9 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         view 
         returns (Achievement memory) 
     {
-        require(ownerOf(tokenId) == user, "User does not own this token");
+        if (ownerOf(tokenId) != user) {
+            revert TokenNotOwned(user, tokenId);
+        }
         string memory achievementId = tokenAchievementId[tokenId];
         return achievements[achievementId];
     }
@@ -403,14 +440,18 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         string memory achievementId,
         string memory newMetadataURI
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(achievements[achievementId].exists, "Achievement does not exist");
+        if (!achievements[achievementId].exists) {
+            revert AchievementNotFound(achievementId);
+        }
         achievements[achievementId].metadataURI = newMetadataURI;
     }
     
     function toggleAchievementActive(
         string memory achievementId
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(achievements[achievementId].exists, "Achievement does not exist");
+        if (!achievements[achievementId].exists) {
+            revert AchievementNotFound(achievementId);
+        }
         achievements[achievementId].active = !achievements[achievementId].active;
     }
     
@@ -437,17 +478,17 @@ contract AchievementNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, 
         uint256[] memory requirements,
         string[] memory metadataURIs
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(
-            achievementIds.length == names.length &&
-            achievementIds.length == descriptions.length &&
-            achievementIds.length == categories.length &&
-            achievementIds.length == rarities.length &&
-            achievementIds.length == xpRewards.length &&
-            achievementIds.length == combatPowerRewards.length &&
-            achievementIds.length == requirements.length &&
-            achievementIds.length == metadataURIs.length,
-            "Array lengths mismatch"
-        );
+        uint256 expectedLength = achievementIds.length;
+        if (names.length != expectedLength ||
+            descriptions.length != expectedLength ||
+            categories.length != expectedLength ||
+            rarities.length != expectedLength ||
+            xpRewards.length != expectedLength ||
+            combatPowerRewards.length != expectedLength ||
+            requirements.length != expectedLength ||
+            metadataURIs.length != expectedLength) {
+            revert InvalidArrayLengths(expectedLength, names.length);
+        }
         
         uint256 length = achievementIds.length;
         for (uint256 i = 0; i < length; i++) {
