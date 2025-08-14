@@ -3,7 +3,7 @@
 > **Hedera Hello Future: Origins Hackathon Submission** | Track: DeFi /
 > Tokenization
 
-[![Escrowzy Demo](public/images/escrowzy-demo.png)](https://f005.backblazeb2.com/file/syntaxsurge-public/escrowzy-hedera-demo.mp4)
+[![Escrowzy Demo](public/images/escrowzy-demo.png)](https://www.youtube.com/watch?v=-G1lA1RDZqM)
 
 ## 🚀 Executive Summary
 
@@ -492,7 +492,7 @@ pnpm start
 
 - 🌐 **Live Platform**:
   [escrowzy-hedera.vercel.app](https://escrowzy-hedera.vercel.app/)
-- 📹 **Demo Video**: [escrowzy-hedera-demo.mp4](https://f005.backblazeb2.com/file/syntaxsurge-public/escrowzy-hedera-demo.mp4)
+- 📹 **Demo Video**: [youtu.be/-G1lA1RDZqM](https://www.youtube.com/watch?v=-G1lA1RDZqM)
 - 💻 **GitHub**:
   [github.com/syntaxsurge/escrowzy-hedera](https://github.com/syntaxsurge/escrowzy-hedera)
 
