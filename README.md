@@ -11,8 +11,8 @@
 traditional P2P trading and token swapping into an engaging, trust-minimized
 experience. We've created a revolutionary **Battle-to-Trade** mechanism where
 traders compete for 25% fee discounts, earning Combat Power through achievement
-NFTs. Built on Hedera Hashgraph with deep integration, we're redefining how
-users interact with DeFi.
+NFTs. Built on Hedera's EVM-compatible blockchain, we're redefining how users
+interact with DeFi through gamification.
 
 ### 🎯 The Innovation That Changes Everything
 
@@ -43,7 +43,7 @@ trust issues in P2P trading.
 | Feature                      | Implementation                         | Innovation                                |
 | ---------------------------- | -------------------------------------- | ----------------------------------------- |
 | **Smart Contract Escrow**    | EscrowCore.sol with dispute resolution | First escrow with gamification incentives |
-| **Hedera Token Service**     | Native HTS integration for all tokens  | Leverages Hedera's unique token features  |
+| **EVM Token Standards**      | ERC20/ERC721 tokens on Hedera EVM      | Standard token implementations on Hedera  |
 | **Autonomous Subscriptions** | On-chain renewal system                | Self-executing revenue model              |
 | **Achievement NFTs**         | 35+ categories using Hedera NFTs       | NFTs that provide real utility in battles |
 | **Battle Rewards**           | Autonomous fee discount system         | Game theory meets DeFi incentives         |
@@ -62,28 +62,28 @@ trust issues in P2P trading.
 
 ## 🔧 Deep Hedera Ecosystem Integration
 
-### 1. Hedera Token Service (HTS) - Complete Integration ✅
+### 1. Hedera EVM Integration - Production Ready ✅
 
 ```typescript
-// Live implementations using Hedera SDK
-✅ Token Creation - Native fungible & NFT support
-✅ Atomic Swaps - Built-in DEX functionality
-✅ Token Association - Automatic token management
-✅ Multi-signature - Native multi-sig support
-✅ Scheduled Transactions - Time-based automation
-✅ Smart Contract Integration - Seamless HTS interaction
-✅ Consensus Service - Decentralized battle outcomes
-✅ Mirror Node API - Real-time data queries
+// Implementation using Hedera as EVM-compatible blockchain
+✅ Smart Contract Deployment - Standard Solidity contracts
+✅ ERC20/ERC721 Tokens - Industry-standard token implementations
+✅ Multi-signature Logic - Smart contract-based multi-sig
+✅ Web3 Integration - Using wagmi/viem for blockchain interaction
+✅ Battle System - Off-chain with on-chain rewards
+✅ Achievement NFTs - ERC721 standard on Hedera
+✅ Subscription Management - On-chain subscription tracking
+✅ JSON-RPC Integration - Standard EVM connectivity
 ```
 
-**Unique Features Powered by Hedera:**
+**Benefits of Hedera EVM:**
 
-- **Native Token Service**: No smart contract overhead for tokens
-- **Consensus Timestamps**: Cryptographically proven transaction ordering
-- **Predictable Fees**: Fixed $0.0001 USD per transaction
+- **Low Transaction Fees**: Hedera's efficient consensus keeps costs minimal
+- **Fast Finality**: 3-5 second transaction confirmation
+- **EVM Compatibility**: Deploy standard Solidity contracts
 - **Carbon Negative**: Most sustainable public ledger
 
-### 2. Hedera Network Integration - Native Support ✅
+### 2. Hedera Network Configuration ✅
 
 ```yaml
 # Full Hedera support in config/blockchains.yaml
@@ -194,7 +194,7 @@ Trade more with discounts
 | **Account Abstraction** | Thirdweb SDK                     | ✅ Implemented           |
 | **Real-time**           | Pusher, WebSockets               | ✅ Live battles          |
 | **Database**            | PostgreSQL, Drizzle ORM          | ✅ Scaled for 100k users |
-| **DeFi**                | Hedera Token Service (HTS)       | ✅ Native integration    |
+| **Payment Processing**  | Smart Contract Escrow            | ✅ Multi-sig support     |
 
 ### Business Model Canvas
 
@@ -219,10 +219,10 @@ Customer Segments    | Channels              | Revenue Streams
 ### Platform Readiness
 
 - **Status**: Fully deployed on Hedera testnet, ready for mainnet
-- **Smart Contracts**: Deployed and verified
-- **Hedera Integration**: Complete with full Hashgraph capabilities
-- **Battle System**: Live and functional
-- **Achievement NFTs**: 35+ categories implemented
+- **Smart Contracts**: Deployed and verified on Hedera EVM
+- **Blockchain Integration**: Standard EVM connectivity via JSON-RPC
+- **Battle System**: Live and functional with database-driven gameplay
+- **Achievement NFTs**: 35+ categories implemented as ERC721
 - **Subscription Tiers**: On-chain management ready
 
 ### Target Market Validation
@@ -264,49 +264,62 @@ Customer Segments    | Channels              | Revenue Streams
 
 ## 🏗️ Technical Integration Depth
 
-### Hedera Services Utilization
+### Hedera EVM Integration
 
-```javascript
-// Deep integration examples from our codebase
+```typescript
+// Actual implementation using Hedera as EVM-compatible chain
 
-1. Native Token Service Integration
-const tokenId = await TokenCreateTransaction()
-  .setTokenName("Battle Reward Token")
-  .setTokenSymbol("BRT")
-  .setDecimals(8)
-  .setInitialSupply(1000000)
-  .execute(client)
+1. Smart Contract Deployment on Hedera
+// Contracts deployed via standard EVM tooling
+const escrowCore = "0x..." // Deployed on Hedera Testnet
+const achievementNFT = "0x..." // ERC721 on Hedera
+const subscriptionManager = "0x..." // Subscription contracts
 
-2. Battle-Triggered NFT Minting
-async function executeBattleReward(winner: AccountId) {
-  // Winner gets achievement NFT minted
-  await TokenMintTransaction()
-    .setTokenId(achievementNFTId)
-    .addMetadata(battleVictoryMetadata)
-    .execute(client)
-  // Apply fee discount via smart contract
-  await escrowCore.setFeeDiscount(winner, 25, 86400)
+2. Battle-Triggered Rewards (Server-side)
+// src/app/api/battles/process/route.ts
+async function processBattleReward(winnerId: string) {
+  // Update database with winner rewards
+  await updateUserGameData(winnerId, {
+    xp: currentXp + battleXpReward,
+    combatPower: newCombatPower
+  })
+  // Apply trading fee discount
+  await applyTradingDiscount(winnerId, 25, 24 * 60 * 60)
 }
 
-3. Consensus Service for Battle Outcomes
-const topicId = await new TopicCreateTransaction()
-  .setTopicMemo("Battle Arena Outcomes")
-  .execute(client)
-// All battle results recorded on consensus service
+3. Achievement NFT Minting
+// Standard ERC721 minting on Hedera EVM
+await achievementNFTContract.mint(
+  userAddress,
+  achievementTokenId,
+  metadataURI
+)
 ```
 
-### Smart Contract Innovation
+### Smart Contract Architecture
 
 ```solidity
-// Revolutionary cross-contract communication
-contract BattleEscrowBridge {
-    function battleWin(address user) external {
-        // Update all three contracts atomically
-        escrowCore.applyDiscount(user);
-        achievementNFT.mint(user, "BATTLE_VICTOR");
-        subscriptionManager.extendTrial(user);
-    }
-}
+// Actual contracts deployed on Hedera
+
+1. EscrowCore.sol Features:
+   - Multi-signature support for trades >10 ETH
+   - Dispute resolution with arbitrator role
+   - Template-based escrow creation
+   - Batch operations for gas efficiency
+   - Integration with SubscriptionManager for dynamic fees
+
+2. AchievementNFT.sol Features:
+   - ERC721 compliant NFT system
+   - 5 achievement categories (Trading, Volume, Battle, Community, Special)
+   - 5 rarity tiers with XP rewards
+   - On-chain progress tracking
+   - Batch minting capabilities
+
+3. SubscriptionManager.sol Features:
+   - 5 subscription tiers (Free to Enterprise)
+   - Dynamic fee calculations
+   - Team subscription sharing
+   - On-chain payment tracking
 ```
 
 ---
@@ -332,7 +345,7 @@ contract BattleEscrowBridge {
 
 1. **First Mover**: No gamified P2P escrow exists on Hedera
 2. **Network Effects**: More traders → Better battles → More traders
-3. **Technical Moat**: Complex smart contract orchestra with HTS
+3. **Technical Moat**: Complex smart contract architecture with gamification
 4. **Hedera Advantages**: Lowest fees, instant finality, carbon negative
 5. **Viral Mechanics**: Battles are inherently shareable
 
@@ -353,29 +366,29 @@ contract BattleEscrowBridge {
 
 - [ ] Deploy mainnet contracts on Hedera
 - [ ] Mobile app with biometric authentication
-- [ ] Hedera-exclusive "Genesis Trader" NFTs
-- [ ] Integration with HashPack and Blade wallets
+- [ ] Exclusive "Genesis Trader" NFTs on Hedera
+- [ ] Integration with Hedera-compatible wallets
 
 ### Q4 2025 - Expansion
 
-- [ ] AI-powered trade matching using Mirror Nodes
-- [ ] Cross-chain battles via Hedera Token Service
-- [ ] Staking program using native HBAR
-- [ ] Advanced analytics via Hedera Mirror REST API
+- [ ] AI-powered trade matching system
+- [ ] Cross-chain trading capabilities
+- [ ] Staking program for platform tokens
+- [ ] Advanced analytics dashboard
 
 ### Q1 2026 - Innovation
 
 - [ ] Augmented Reality battles
-- [ ] Prediction markets using Hedera Consensus Service
-- [ ] Automated market making with HTS pools
-- [ ] Integration with Hedera NFT ecosystem
+- [ ] Prediction markets for battle outcomes
+- [ ] Automated market making for liquidity
+- [ ] Expanded NFT marketplace features
 
 ### Q2 2026 - Domination
 
-- [ ] Launch ESCROW token on HTS
-- [ ] Decentralized dispute resolution via Consensus Service
-- [ ] Guild wars with $100k HBAR prizes
-- [ ] Enterprise partnerships leveraging Hedera's network
+- [ ] Launch ESCROW token on Hedera
+- [ ] Decentralized dispute resolution system
+- [ ] Guild wars with major prize pools
+- [ ] Enterprise partnerships and integrations
 
 ---
 
@@ -426,12 +439,12 @@ pnpm start
 
 ## 📈 Performance & Optimization
 
-### Hedera Optimization
+### Platform Optimization
 
-- **Native Operations**: No gas, just predictable fees
-- **Mirror Node Indexing**: <100ms query time
-- **Consensus Service**: Instant battle verification
-- **File Service**: On-ledger achievement storage
+- **Low-Cost Operations**: Hedera's efficient fee structure
+- **Fast Transactions**: 3-5 second finality
+- **Real-time Updates**: WebSocket-based battle system
+- **Efficient Storage**: PostgreSQL with optimized queries
 
 ### Scalability Metrics
 
@@ -492,7 +505,8 @@ pnpm start
 
 - 🌐 **Live Platform**:
   [escrowzy-hedera.vercel.app](https://escrowzy-hedera.vercel.app/)
-- 📹 **Demo Video**: [youtu.be/-G1lA1RDZqM](https://www.youtube.com/watch?v=-G1lA1RDZqM)
+- 📹 **Demo Video**:
+  [youtu.be/-G1lA1RDZqM](https://www.youtube.com/watch?v=-G1lA1RDZqM)
 - 💻 **GitHub**:
   [github.com/syntaxsurge/escrowzy-hedera](https://github.com/syntaxsurge/escrowzy-hedera)
 
